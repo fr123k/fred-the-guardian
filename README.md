@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/fr123k/fred-the-guardian.svg?branch=main)](https://travis-ci.com/fr123k/fred-the-guardian)
+[![Build Status](https://travis-ci.com/fr123k/fred-the-guardian.svg?branch=main)](https://app.travis-ci.com/fr123k/fred-the-guardian)
 
 # Fred the Guardian
 
