@@ -1,6 +1,7 @@
 package counter
 
 import (
+    _ "fmt"
     "sync"
     "time"
 )
@@ -12,7 +13,7 @@ type RateLimit struct {
 }
 
 type Rate struct {
-    Count uint64
+    Count     uint64
     NextReset int64
 }
 
@@ -27,18 +28,22 @@ func (r *RateLimit) Increment() Rate {
     start := time.Now()
     elapsed := start.Sub(r.counter.resetDate)
     nextReset := r.duration - elapsed
-    if elapsed > r.duration {
+    if elapsed >= r.duration {
         // TODO add proper logging
         // fmt.Printf("Elapsed time %s > %s \n", start.String(), r.counter.resetDate.String())
         r.mutex.Lock()
         defer r.mutex.Unlock()
+        elapsed = start.Sub(r.counter.resetDate)
         // double check idiom to ensure only lock when its nessary and to only reset the counter once
         if elapsed > r.duration {
+            // TODO add proper logging
+            // fmt.Printf("Reset %s > %s \n", start.String(), r.counter.resetDate.String())
             r.counter.Reset()
         }
+        nextReset = r.duration - elapsed
     }
-    return Rate {
-        Count: r.counter.IncrAndGet(),
+    return Rate{
+        Count:     r.counter.IncrAndGet(),
         NextReset: int64(nextReset.Seconds()),
     }
 }
