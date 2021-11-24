@@ -72,13 +72,16 @@ This would be the road map for a self developed rate limiting service.
 
 #### Version 1
 
- * [ ] implement the ping web server API without rate limiting
- * [ ] implement the pong client interface
- * [ ] setup local minibike for first deployment
+ * [ ] implement the first simple rate limiting based on in memory counter
+   * [x]  single thread safe counter
+   * [x]  simple rate limiting with counter reset
+   * [ ]  data structure for multiple counters
 
 #### Version 2
 
- * [ ] implement the first simple rate limiting based on in memory counters 
+ * [ ] implement the ping web server API without rate limiting
+ * [ ] implement the pong client interface
+ * [ ] setup local minibike for first deployment
 
 #### Version 3
 
