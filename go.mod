@@ -1,3 +1,8 @@
 module github.com/fr123k/fred-the-guardian
 
 go 1.15
+
+require (
+	github.com/fr123k/golang-template v0.0.0-20210214144004-e137075f8107
+	github.com/stretchr/testify v1.7.0
+)
