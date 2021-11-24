@@ -6,7 +6,10 @@ go-init:
 
 build:
 	go build -o build/main cmd/main.go
-	go test -v --cover ./...
+	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./...
+
+coverage: build
+	go tool cover -html=build/cover.tmp
 
 run: build
 	./build/main
