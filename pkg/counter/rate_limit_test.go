@@ -29,12 +29,12 @@ func TestRateLimitResetParallel(t *testing.T) {
     for c := 0; c < 1000; c++ {
         rateLimit.Increment()
     }
-    time.Sleep(3 * time.Second)
+    time.Sleep(4 * time.Second)
     var wg sync.WaitGroup
     for i := 0; i < 10; i++ {
         wg.Add(1)
         go func() {
-            time.Sleep(1 * time.Second)
+            // time.Sleep(1 * time.Second)
             for c := 0; c < 1000; c++ {
                 rateLimit.Increment()
                 // fmt.Printf("Count %d\n", count)
