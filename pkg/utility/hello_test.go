@@ -1,18 +1,18 @@
 package utility
 
 import (
-	"testing"
+    "testing"
 )
 
 // TestHelloWorld
 func TestHelloWorld(t *testing.T) {
-	HelloWorld()
+    HelloWorld()
 }
 
 func TestHello(t *testing.T) {
-	message := Hello("Test")
+    message := Hello("Test")
 
-	if message != "Hello Test" {
-		t.Errorf("The message is wrong, got: %s, want: %s.", message, "Hello Test")
-	}
+    if message != "Hello Test" {
+        t.Errorf("The message is wrong, got: %s, want: %s.", message, "Hello Test")
+    }
 }
