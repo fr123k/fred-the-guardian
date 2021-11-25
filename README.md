@@ -80,27 +80,32 @@ This would be the road map for a self developed rate limiting service.
 #### Version 2
 
  * [ ] implement the ping web server API without rate limiting
+  * [ ] 
  * [ ] implement the pong client interface
  * [ ] setup local minibike for first deployment
 
 #### Version 3
 
- * [ ] implement the rate limiting with counters stored in redis
+ * [ ] implement rate limiting in the ping service with in memory stored counters
 
 #### Version 4
 
+ * [ ] implement the rate limiting with counters stored in redis
+
+#### Version 5
+
  * [ ] implement the rate limiting based on in memory [token bucket algorithm](https://en.wikipedia.org/wiki/Token_bucket)
 
-#### Version 5 
+#### Version 6
 
  * [ ] implement the rate limiting based on [token bucket algorithm](https://en.wikipedia.org/wiki/Token_bucket) stored in redis
 
-#### Version 6
+#### Version 7
 
  * [ ] implement the rate limiting based on in memory [fixed window counters](https://medium.com/figma-design/an-alternative-approach-to-rate-limiting-f8a06cf7c94c)
  * [ ] implement the rate limiting based on in memory [sliding window counters](https://medium.com/figma-design/an-alternative-approach-to-rate-limiting-f8a06cf7c94c)
 
-#### Version 7
+#### Version 8
 
  * [ ] implement the rate limiting based on [fixed window counters](https://medium.com/figma-design/an-alternative-approach-to-rate-limiting-f8a06cf7c94c) stored in redis
  * [ ] implement the rate limiting based on [sliding window counters](https://medium.com/figma-design/an-alternative-approach-to-rate-limiting-f8a06cf7c94c) stored in redis
