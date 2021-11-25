@@ -1,7 +1,7 @@
 package counter
 
 import (
-    _"fmt"
+    _ "fmt"
     "strconv"
     "sync"
     "testing"
@@ -44,8 +44,8 @@ func TestRateLimitResetParallel(t *testing.T) {
     }
 
     wg.Wait()
-
-    assert.EqualValues(t, "10000", strconv.FormatUint(rateLimit.counter.Get(), 10), "The counter should be rested and has the count 1.")
+    assert.Equal(t, true, rateLimit.reseted, "The counter should be reseted.")
+    assert.EqualValues(t, "10000", strconv.FormatUint(rateLimit.counter.Get(), 10), "The counter should be rested and has the count 10000.")
 }
 
 func TestRateLimitNextReset(t *testing.T) {
@@ -55,9 +55,13 @@ func TestRateLimitNextReset(t *testing.T) {
     rateLimit.Increment()
 
     time.Sleep(3 * time.Second)
-    rate:= rateLimit.Increment()
+    rate := rateLimit.Increment()
 
+    assert.Equal(t, false, rateLimit.reseted, "The counter should be not reseted.")
     assert.Equal(t, uint64(4), rate.Count, "The counter should be 4.")
-    assert.Equal(t, int64(2), rate.NextReset, "The counter should be 4.")
+    assert.Equal(t, int64(3), rate.NextReset, "The counter should be 4.")
 
+    time.Sleep(time.Duration(rate.NextReset) * time.Second)
+    rateLimit.Increment()
+    assert.Equal(t, true, rateLimit.reseted, "The counter should be reseted.")
 }
