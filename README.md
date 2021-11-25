@@ -72,10 +72,10 @@ This would be the road map for a self developed rate limiting service.
 
 #### Version 1
 
- * [ ] implement the first simple rate limiting based on in memory counter
+ * [x] implement the first simple rate limiting based on in memory counter
    * [x]  single thread safe counter
    * [x]  simple rate limiting with counter reset
-   * [ ]  data structure for multiple counters
+   * [x]  data structure for multiple counters
 
 #### Version 2
 

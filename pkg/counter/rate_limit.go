@@ -1,7 +1,7 @@
 package counter
 
 import (
-    _ "fmt"
+    "math"
     "sync"
     "time"
 )
@@ -10,6 +10,7 @@ type RateLimit struct {
     counter  *Counter
     duration time.Duration
     mutex    sync.Mutex
+    reseted  bool
 }
 
 type Rate struct {
@@ -28,6 +29,7 @@ func (r *RateLimit) Increment() Rate {
     start := time.Now()
     elapsed := start.Sub(r.counter.resetDate)
     nextReset := r.duration - elapsed
+
     if elapsed >= r.duration {
         // TODO add proper logging
         // fmt.Printf("Elapsed time %s > %s \n", start.String(), r.counter.resetDate.String())
@@ -39,11 +41,12 @@ func (r *RateLimit) Increment() Rate {
             // TODO add proper logging
             // fmt.Printf("Reset %s > %s \n", start.String(), r.counter.resetDate.String())
             r.counter.Reset()
+            r.reseted = true
         }
         nextReset = r.duration - elapsed
     }
     return Rate{
         Count:     r.counter.IncrAndGet(),
-        NextReset: int64(nextReset.Seconds()),
+        NextReset: int64(math.Round(nextReset.Seconds())),
     }
 }
