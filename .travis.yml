@@ -22,7 +22,6 @@ before_install:
 
 script:
   - make build
-  - make run
 
 after_script:
   - make clean
