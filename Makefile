@@ -5,7 +5,7 @@ go-init:
 	go mod vendor
 
 build:
-	go build -o build/main cmd/main.go
+	go build -o build/main srv/ping.go
 	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./...
 
 coverage: build
