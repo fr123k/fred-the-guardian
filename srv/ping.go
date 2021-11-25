@@ -1,21 +1,27 @@
 package main
 
 import (
-	_ "encoding/json"
-	"fmt"
-	"net/http"
-	_ "strconv"
+    "encoding/json"
+    _ "encoding/json"
+    "net/http"
+    _ "strconv"
 
-	"github.com/fr123k/fred-the-guardian/pkg/utility"
-	"github.com/gorilla/mux"
+    "github.com/fr123k/fred-the-guardian/pkg/utility"
+    "github.com/gorilla/mux"
 )
+
+type PongResponse struct {
+    Response string `json:"response"`
+}
 
 func ping(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
     // params := mux.Vars(r)
     // total, err := strconv.ParseInt(params["total"], 10, 64)
-    // json.NewEncoder(w).Encode(vmGroup)
-    fmt.Println("pong")
+    pong := PongResponse{
+        Response: "pong",
+    }
+    json.NewEncoder(w).Encode(pong)
     return
 }
 
@@ -35,7 +41,7 @@ func main() {
     router := mux.NewRouter()
 
     router.HandleFunc("/ping", ping).
-        Methods("GET")
+        Methods("POST")
 
     router.Use(Middleware)
 
