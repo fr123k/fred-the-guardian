@@ -64,6 +64,27 @@ There a couple of web servers and ingress controllers out there they implement d
 
 In my opinion its better to use one of those above if rate limiting itself is not the core of the companies business.
 
+## Deployment
+
+The deployment is only tested with a local minikube VM.
+The deployment files are located at 'deploy/local'.
+
+There is a [Makefile] in the local deployment folder
+
+```bash
+cd deploy/local
+# download the fr123k/ubuntu21-minikube vagrant box from vagrant cloud
+# provision it based on the VagrantFile
+# the two step can be skipped if you have a kubernetes cluster already
+make vagrant setup
+# this just run kubectl apply for the ping k8s manifest files
+make deploy
+# this will use curl to send the ping request to the k8s pod
+# if use use a different k8s cluster then the vagrant minikube one then
+# adjust the EXTERNAL_IP
+EXTERNAL_IP=172.28.128.16 make test
+```
+
 ## Development
 
 This would be the road map for a self developed rate limiting service.

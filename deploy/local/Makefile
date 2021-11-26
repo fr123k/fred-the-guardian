@@ -9,7 +9,7 @@ setup:
 	# This is a temporarly fix
 	kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission || echo "ignore errors"
 
-deploy: setup
+deploy:
 	kubectl apply -f deployment.yml 
 	kubectl apply -f service.yml
 	kubectl apply -f ingress.yml
