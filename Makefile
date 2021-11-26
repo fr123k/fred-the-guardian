@@ -1,5 +1,18 @@
 .PHONY: build
 
+VERSION=1.0
+PORT?=8080
+export NAME=fr123k/fred-the-guardian
+export IMAGE="${NAME}:${VERSION}"
+export LATEST="${NAME}:latest"
+
+export DOCKER_COMMAND_LOCAL=docker run \
+		-e PORT="${PORT}" \
+		-p ${PORT}:${PORT} \
+
+docker-build:
+	docker build -t $(IMAGE) -f Dockerfile .
+	
 go-init:
 	go mod init github.com/fr123k/fred-the-guardian
 	go mod vendor
@@ -14,5 +27,21 @@ coverage: build
 run: build
 	./build/main
 
+docker-run: docker-build
+	docker stop fred || echo ignore error
+	$(DOCKER_COMMAND_LOCAL) -d --rm --name fred  $(IMAGE)
+
 clean:
 	rm -rfv ./build
+
+release: docker-build ## Push docker image to docker hub
+	docker tag ${IMAGE} ${LATEST}
+	docker push ${IMAGE}
+	docker push ${NAME}
+
+test: docker-run
+	curl -X POST -H 'X-SECRET-KEY:top secret' -v http://localhost:${PORT}/ping -d '{"request":"ping"}'
+
+# Absolutely awesome: http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
+help: ## Print this help
+	@grep -E '^[a-zA-Z._-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
