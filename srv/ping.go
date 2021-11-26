@@ -30,6 +30,10 @@ func jsonTagName(fld reflect.StructField) string {
 	return name
 }
 
+func status(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
 func ping(w http.ResponseWriter, r *http.Request) {
 	var pingRqt model.PingRequest
 
@@ -95,11 +99,11 @@ func Middleware(next http.Handler) http.Handler {
 				//TODO expose service internal error message is not good security practice but good for quick development
 				Message: "Missing http header 'X-SECRET-KEY'.",
 			})
+			// will stop request processing
 			return
 		}
 		// will trigger request processing
 		next.ServeHTTP(w, r)
-		// will stop request processing
 		return
 	})
 }
@@ -110,6 +114,8 @@ func main() {
 
 	router.HandleFunc("/ping", ping).
 		Methods("POST")
+	router.HandleFunc("/status", status).
+		Methods("GET")
 
 	router.Use(Middleware)
 
