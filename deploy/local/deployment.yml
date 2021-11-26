@@ -1,0 +1,30 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fred-the-guardian
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: fred-the-guardian
+  template:
+    metadata:
+      labels:
+        name: fred-the-guardian
+    spec:
+      containers:
+      - name: application
+        image: fr123k/fred-the-guardian:1.1
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /status
+            port: 8080
+            httpHeaders:
+            - name: X-SECRET-KEY
+              value: top secret k8s
+          initialDelaySeconds: 3
+          periodSeconds: 3

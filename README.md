@@ -81,7 +81,7 @@ This would be the road map for a self developed rate limiting service.
 
  * [x] implement the ping web server API without rate limiting
  * [ ] implement the pong client interface
- * [ ] setup local minikube for first deployment
+ * [x] setup local minikube for first deployment
 
 #### Version 3
 
