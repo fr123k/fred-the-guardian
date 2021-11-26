@@ -21,6 +21,9 @@ build:
 	go build -o build/main srv/ping.go
 	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./...
 
+build-cli:
+	go build -o build/pong cmd/pong.go
+
 coverage: build
 	go tool cover -html=build/cover.tmp
 
