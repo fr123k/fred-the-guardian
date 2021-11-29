@@ -147,6 +147,8 @@ This would be the road map for a self developed rate limiting service.
    * [x] implement the edge case and happy path tests
    * [ ] implement the rate policy tests
  * [ ] refactor the ping service reduce code lines and abstract general behavior
+ * [ ] add pong cli test
+ * [ ] refactor the pong cli reduce code lines and abstract general behavior
 
 #### Version 4
 

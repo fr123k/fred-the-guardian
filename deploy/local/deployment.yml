@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: application
-        image: fr123k/fred-the-guardian:3.0
+        image: fr123k/fred-the-guardian:3.1
         imagePullPolicy: IfNotPresent
         ports:
           - containerPort: 8080
