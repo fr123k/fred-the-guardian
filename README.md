@@ -143,6 +143,8 @@ This would be the road map for a self developed rate limiting service.
 #### Version 3
 
  * [x] implement rate limiting in the ping service with in memory stored counters
+ * [ ] add ping service test
+ * [ ] refactor the ping service reduce code lines and abstract general behavior
 
 #### Version 4
 
