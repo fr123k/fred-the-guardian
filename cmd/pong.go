@@ -2,8 +2,6 @@ package main
 
 import (
     "bytes"
-    "crypto/rand"
-    "encoding/base64"
     "encoding/json"
     "errors"
     "flag"
@@ -17,6 +15,7 @@ import (
     "time"
 
     "github.com/fr123k/fred-the-guardian/pkg/model"
+    "github.com/fr123k/fred-the-guardian/pkg/utility"
 )
 
 const (
@@ -47,29 +46,13 @@ func (p PingConfig) Host() string {
     return fmt.Sprintf("%s:%s", p.Server, p.Port)
 }
 
-func TrailingSlash(s string) string {
-    if strings.HasSuffix(s, "/") {
-        return s
-    }
-    return fmt.Sprintf("%s/", s)
-}
-
 func (p PingConfig) Path() string {
-    return TrailingSlash(p.path)
-}
-
-//https://stackoverflow.com/a/50581165
-func rndStr(len int) string {
-    buff := make([]byte, len)
-    rand.Read(buff)
-    str := base64.StdEncoding.EncodeToString(buff)
-    // Base 64 can be longer than len
-    return str[:len]
+    return utility.TrailingSlash(p.path)
 }
 
 func (p PingConfig) Secret() string {
     if p.RandomSecret {
-        return rndStr(12)
+        return utility.RandomString(12)
     }
     return p.secret
 }
