@@ -11,3 +11,8 @@ type ErrorResponse struct {
     Error   string `json:"error"`
     Code    string `json:"code"`
 }
+
+type RateLimitResponse struct {
+    ErrorResponse
+	Wait int64 `json:"wait"`
+}
