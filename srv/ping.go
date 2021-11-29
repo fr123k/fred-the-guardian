@@ -1,26 +1,20 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
-	"reflect"
-	"strings"
-	"time"
+    "encoding/json"
+    "fmt"
+    "log"
+    "net/http"
+    "reflect"
+    "strings"
+    "time"
 
-	"github.com/fr123k/fred-the-guardian/pkg/counter"
-	"github.com/fr123k/fred-the-guardian/pkg/model"
-	"github.com/fr123k/fred-the-guardian/pkg/utility"
+    "github.com/fr123k/fred-the-guardian/pkg/counter"
+    "github.com/fr123k/fred-the-guardian/pkg/model"
+    "github.com/fr123k/fred-the-guardian/pkg/utility"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/gorilla/mux"
-)
-
-const (
-    INVALID_REQUEST_BODY = "E400"
-    UNAUTHORIZED_REQUEST = "E401"
-    TOO_MANY_REQUESTS    = "E429"
+    "github.com/go-playground/validator/v10"
+    "github.com/gorilla/mux"
 )
 
 // Incase of invalid struct it returns the field name from the json tag instead of the struct variable name.
@@ -43,13 +37,19 @@ func ping(w http.ResponseWriter, r *http.Request) {
 
     w.Header().Set("Content-Type", "application/json")
 
+    if r.Body == nil {
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(model.INVALID_REQUEST_BODY_EMPTY_PAYLOAD)
+        return
+    }
+
     err := json.NewDecoder(r.Body).Decode(&pingRqt)
     defer r.Body.Close()
 
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         json.NewEncoder(w).Encode(model.ErrorResponse{
-            Code: INVALID_REQUEST_BODY,
+            Code: model.INVALID_REQUEST_BODY,
             //TODO expose service internal error message is not good security practice but good for quick development
             Error:   err.Error(),
             Message: "Request body malformed.",
@@ -65,7 +65,7 @@ func ping(w http.ResponseWriter, r *http.Request) {
         validationErrors := err.(validator.ValidationErrors)
         w.WriteHeader(http.StatusBadRequest)
         json.NewEncoder(w).Encode(model.ErrorResponse{
-            Code:    INVALID_REQUEST_BODY,
+            Code:    model.INVALID_REQUEST_BODY,
             Error:   validationErrors.Error(),
             Message: "Request body malformed.",
         })
@@ -96,11 +96,7 @@ func Middleware(next http.Handler) http.Handler {
 
         if len(secKey) == 0 {
             w.WriteHeader(http.StatusUnauthorized)
-            json.NewEncoder(w).Encode(model.ErrorResponse{
-                Code: UNAUTHORIZED_REQUEST,
-                Message: "Missing http header 'X-SECRET-KEY'.",
-                Error: "Unauthorized request",
-            })
+            json.NewEncoder(w).Encode(model.UNAUTHORIZED_REQUEST_RESPONSE)
             // will stop request processing
             return
         }
@@ -122,7 +118,7 @@ func GlobalCounterMiddleware(maxcnt int, duration time.Duration) mux.MiddlewareF
                 w.WriteHeader(http.StatusTooManyRequests)
                 json.NewEncoder(w).Encode(model.RateLimitResponse{
                     ErrorResponse: model.ErrorResponse{
-                        Code: TOO_MANY_REQUESTS,
+                        Code: model.TOO_MANY_REQUESTS,
                         Message: fmt.Sprintf("Reach the limit of '%d' request.", maxcnt),
                         Error: "Rate limit exceeded."},
                     Wait: rate.NextReset,
@@ -149,7 +145,7 @@ func BucketCountersMiddleware(maxcnt int, duration time.Duration) mux.Middleware
                 w.WriteHeader(http.StatusTooManyRequests)
                 json.NewEncoder(w).Encode(model.RateLimitResponse{
                     ErrorResponse: model.ErrorResponse{
-                        Code: TOO_MANY_REQUESTS,
+                        Code: model.TOO_MANY_REQUESTS,
                         Message: fmt.Sprintf("Reach the limit of '%d' request.", maxcnt),
                         Error: "Rate limit exceeded."},
                     Wait: rate.NextReset,
@@ -165,7 +161,12 @@ func BucketCountersMiddleware(maxcnt int, duration time.Duration) mux.Middleware
 }
 
 func main() {
+    router := startRouter()
 
+    http.ListenAndServe(":"+utility.Env("PORT", "8080"), router)
+}
+
+func startRouter() *mux.Router {
     router := mux.NewRouter()
 
     router.HandleFunc("/ping", ping).
@@ -177,5 +178,5 @@ func main() {
     router.Use(GlobalCounterMiddleware(2, 1 * time.Second))
     router.Use(BucketCountersMiddleware(10, 1 * time.Minute))
 
-    http.ListenAndServe(":"+utility.Env("PORT", "8080"), router)
+    return router
 }
