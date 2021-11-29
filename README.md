@@ -76,6 +76,8 @@ cd deploy/local
 # download the fr123k/ubuntu21-minikube vagrant box from vagrant cloud
 # provision it based on the VagrantFile
 # the two step can be skipped if you have a kubernetes cluster already
+export KUBECONFIG_SAVE=${KUBECONFIG}
+export KUBECONFIG=$(pwd)/kubectl.config
 make vagrant setup
 # this just run kubectl apply for the ping k8s manifest files
 make deploy
@@ -83,6 +85,7 @@ make deploy
 # if use use a different k8s cluster then the vagrant minikube one then
 # adjust the EXTERNAL_IP
 EXTERNAL_IP=172.28.128.16 make test
+export KUBECONFIG=${KUBECONFIG_SAVE}
 ```
 
 ## Development
