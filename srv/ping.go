@@ -115,7 +115,7 @@ func Middleware(next http.Handler) http.Handler {
 
 // Middleware function, which will be called for each request
 func GlobalCounterMiddleware(maxcnt int, duration time.Duration) mux.MiddlewareFunc {
-    counter := counter.NewRateLimit(1 * time.Second)
+    counter := counter.NewRateLimit(duration)
     return func(h http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             // will trigger request processing
