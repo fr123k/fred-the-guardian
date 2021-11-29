@@ -2,12 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	_ "encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"reflect"
-	_ "strconv"
 	"strings"
 	"time"
 
@@ -100,7 +98,6 @@ func Middleware(next http.Handler) http.Handler {
             w.WriteHeader(http.StatusUnauthorized)
             json.NewEncoder(w).Encode(model.ErrorResponse{
                 Code: UNAUTHORIZED_REQUEST,
-                //TODO expose service internal error message is not good security practice but good for quick development
                 Message: "Missing http header 'X-SECRET-KEY'.",
             })
             // will stop request processing
@@ -125,7 +122,6 @@ func GlobalCounterMiddleware(maxcnt int, duration time.Duration) mux.MiddlewareF
                 json.NewEncoder(w).Encode(model.RateLimitResponse{
                     ErrorResponse: model.ErrorResponse{
                         Code: TOO_MANY_REQUESTS,
-                        //TODO expose service internal error message is not good security practice but good for quick development
                         Message: fmt.Sprintf("Reach the limit of '%d' request.", maxcnt)},
                     Wait: rate.NextReset,
                 })
@@ -152,7 +148,6 @@ func BucketCountersMiddleware(maxcnt int, duration time.Duration) mux.Middleware
                 json.NewEncoder(w).Encode(model.RateLimitResponse{
                     ErrorResponse: model.ErrorResponse{
                         Code: TOO_MANY_REQUESTS,
-                        //TODO expose service internal error message is not good security practice but good for quick development
                         Message: fmt.Sprintf("Reach the limit of '%d' request.", maxcnt)},
                     Wait: rate.NextReset,
                 })

@@ -1,9 +1,9 @@
 package counter
 
 import (
-    "math"
-    "sync"
-    "time"
+	"math"
+	"sync"
+	"time"
 )
 
 type RateLimit struct {
@@ -30,7 +30,7 @@ func (r *RateLimit) Increment() Rate {
     elapsed := start.Sub(r.counter.resetDate)
     nextReset := r.duration - elapsed
 
-    if elapsed >= r.duration {
+    if elapsed > r.duration {
         // TODO add proper logging
         // fmt.Printf("Elapsed time %s > %s \n", start.String(), r.counter.resetDate.String())
         r.mutex.Lock()
