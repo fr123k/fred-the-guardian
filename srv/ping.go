@@ -108,6 +108,7 @@ func Middleware(next http.Handler) http.Handler {
 }
 
 // Middleware function, which will be called for each request
+// TODO add name to identify it in logs and tests
 func GlobalCounterMiddleware(maxcnt int, duration time.Duration) mux.MiddlewareFunc {
     counter := counter.NewRateLimit(duration)
     return func(h http.Handler) http.Handler {
@@ -134,6 +135,7 @@ func GlobalCounterMiddleware(maxcnt int, duration time.Duration) mux.MiddlewareF
 }
 
 // Middleware function, which will be called for each request
+// TODO add name to identify it in logs and tests
 func BucketCountersMiddleware(maxcnt int, duration time.Duration) mux.MiddlewareFunc {
     counter := counter.NewBucket(duration)
     return func(h http.Handler) http.Handler {
