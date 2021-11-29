@@ -88,6 +88,39 @@ EXTERNAL_IP=172.28.128.16 make test
 export KUBECONFIG=${KUBECONFIG_SAVE}
 ```
 
+## Run Cli
+
+```bash
+# build the pong command line interface
+make build-cli
+# show the pong cli argument options
+./build/pong -help
+Usage of ./build/pong:
+  -auto
+        use auto discovery of possible ping services (Default: false)
+  -path string
+        root path of the ping service (Default: /) (default "/")
+  -port string
+        port of the ping service (Default: 8080) (default "8080")
+  -rndsec
+        set true to generate a random secret for each request (Default: false)
+  -secret string
+        specify the secret value for the X-SECRET-KEY http header (Default: top secret) (default "top secret")
+  -server string
+        server address of the ping service (Default: 127.0.0.1) (default "127.0.0.1")
+
+
+# run with default ping service endpoint localhost:8080/
+./build/pong
+
+# run with auto discovery try couple of options to reach a ping service
+./build/pong -auto true
+
+# run with default ping service endpoint localhost:8080/
+./build/pong -server 192.168.2.45 -port 8888 -path /proxy/
+
+```
+
 ## Development
 
 This would be the road map for a self developed rate limiting service.
