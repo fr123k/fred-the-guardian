@@ -1,22 +1,22 @@
 package main
 
 import (
-	"bytes"
-	"crypto/rand"
-	"encoding/base64"
-	"encoding/json"
-	"errors"
-	"flag"
-	"fmt"
-	"io/ioutil"
-	"log"
-	"net"
-	"net/http"
-	"sort"
-	"strings"
-	"time"
+    "bytes"
+    "crypto/rand"
+    "encoding/base64"
+    "encoding/json"
+    "errors"
+    "flag"
+    "fmt"
+    "io/ioutil"
+    "log"
+    "net"
+    "net/http"
+    "sort"
+    "strings"
+    "time"
 
-	"github.com/fr123k/fred-the-guardian/pkg/model"
+    "github.com/fr123k/fred-the-guardian/pkg/model"
 )
 
 const (
@@ -141,7 +141,7 @@ func parseArgs() PingConfig {
             path:   *path},
         AutoDiscovery: *autoDiscovery,
         secret:        *secret,
-        RandomSecret: *rndSecret,
+        RandomSecret:  *rndSecret,
     }
 }
 
@@ -163,7 +163,7 @@ func ping() {
 
     url := fmt.Sprintf("http://%s%sping", pingCfg.Host(), pingCfg.Path())
     for {
-        fmt.Printf("Call fred %s\n", url)
+        log.Printf("Call fred %s\n", url)
         client := &http.Client{}
         payloadBuf := new(bytes.Buffer)
 
