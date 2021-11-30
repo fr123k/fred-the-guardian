@@ -2,7 +2,6 @@ package main
 
 import (
     "encoding/json"
-    "fmt"
     "log"
     "net/http"
     "reflect"
@@ -64,11 +63,7 @@ func ping(w http.ResponseWriter, r *http.Request) {
     if err != nil {
         validationErrors := err.(validator.ValidationErrors)
         w.WriteHeader(http.StatusBadRequest)
-        json.NewEncoder(w).Encode(model.ErrorResponse{
-            Code:    model.INVALID_REQUEST_BODY,
-            Error:   validationErrors.Error(),
-            Message: "Request body malformed.",
-        })
+        json.NewEncoder(w).Encode(model.InValidRequest(validationErrors.Error()))
         return
     }
 
@@ -109,21 +104,15 @@ func Middleware(next http.Handler) http.Handler {
 
 // Middleware function, which will be called for each request
 // TODO add name to identify it in logs and tests
-func GlobalCounterMiddleware(maxcnt int, duration time.Duration) mux.MiddlewareFunc {
+func GlobalCounterMiddleware(maxCnt uint, duration time.Duration) mux.MiddlewareFunc {
     counter := counter.NewRateLimit(duration)
     return func(h http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             // will trigger request processing
             rate := counter.Increment()
-            if rate.Count > uint64(maxcnt) {
+            if rate.Count > uint64(maxCnt) {
                 w.WriteHeader(http.StatusTooManyRequests)
-                json.NewEncoder(w).Encode(model.RateLimitResponse{
-                    ErrorResponse: model.ErrorResponse{
-                        Code: model.TOO_MANY_REQUESTS,
-                        Message: fmt.Sprintf("Reach the limit of '%d' request.", maxcnt),
-                        Error: "Rate limit exceeded."},
-                    Wait: rate.NextReset,
-                })
+                json.NewEncoder(w).Encode(model.TooManyRequests(maxCnt, rate.NextReset))
                 // will stop request processing
                 return
             }
@@ -136,22 +125,16 @@ func GlobalCounterMiddleware(maxcnt int, duration time.Duration) mux.MiddlewareF
 
 // Middleware function, which will be called for each request
 // TODO add name to identify it in logs and tests
-func BucketCountersMiddleware(maxcnt int, duration time.Duration) mux.MiddlewareFunc {
+func BucketCountersMiddleware(maxCnt uint, duration time.Duration) mux.MiddlewareFunc {
     counter := counter.NewBucket(duration)
     return func(h http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             // will trigger request processing
             secKey := r.Header.Get("X-SECRET-KEY")
             rate := counter.Increment(secKey)
-            if rate.Count > uint64(maxcnt) {
+            if rate.Count > uint64(maxCnt) {
                 w.WriteHeader(http.StatusTooManyRequests)
-                json.NewEncoder(w).Encode(model.RateLimitResponse{
-                    ErrorResponse: model.ErrorResponse{
-                        Code: model.TOO_MANY_REQUESTS,
-                        Message: fmt.Sprintf("Reach the limit of '%d' request.", maxcnt),
-                        Error: "Rate limit exceeded."},
-                    Wait: rate.NextReset,
-                })
+                json.NewEncoder(w).Encode(model.TooManyRequests(maxCnt, rate.NextReset))
                 // will stop request processing
                 return
             }
@@ -164,7 +147,8 @@ func BucketCountersMiddleware(maxcnt int, duration time.Duration) mux.Middleware
 
 func main() {
     router := startRouter()
-
+    router = enableGlobalRateLimit(router)
+    router = enableBucketRateLimit(router)
     http.ListenAndServe(":"+utility.Env("PORT", "8080"), router)
 }
 
@@ -177,8 +161,16 @@ func startRouter() *mux.Router {
         Methods("GET")
 
     router.Use(Middleware)
-    router.Use(GlobalCounterMiddleware(2, 1 * time.Second))
-    router.Use(BucketCountersMiddleware(10, 1 * time.Minute))
 
+    return router
+}
+
+func enableGlobalRateLimit(router *mux.Router) *mux.Router {
+    router.Use(GlobalCounterMiddleware(2, 1 * time.Second))
+    return router
+}
+
+func enableBucketRateLimit(router *mux.Router) *mux.Router {
+    router.Use(BucketCountersMiddleware(10, 1 * time.Minute))
     return router
 }
