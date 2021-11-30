@@ -2,7 +2,6 @@
 github.com/davecgh/go-spew/spew
 # github.com/fr123k/golang-template v0.0.0-20210214144004-e137075f8107
 ## explicit
-github.com/fr123k/golang-template/pkg/utility
 # github.com/go-playground/locales v0.14.0
 github.com/go-playground/locales
 github.com/go-playground/locales/currency
@@ -16,6 +15,9 @@ github.com/go-playground/validator/v10
 github.com/gorilla/mux
 # github.com/leodido/go-urn v1.2.1
 github.com/leodido/go-urn
+# github.com/mcuadros/go-defaults v1.2.0
+## explicit
+github.com/mcuadros/go-defaults
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
 # github.com/stretchr/testify v1.7.0
