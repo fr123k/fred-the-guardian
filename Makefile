@@ -35,6 +35,7 @@ docker-run: docker-build
 	$(DOCKER_COMMAND_LOCAL) -d --rm --name fred  $(IMAGE)
 
 clean:
+	docker stop fred || echo ignore error
 	rm -rfv ./build
 
 release: docker-build ## Push docker image to docker hub
