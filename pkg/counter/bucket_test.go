@@ -1,19 +1,19 @@
 package counter
 
 import (
-	"fmt"
-	"strconv"
-	"sync"
-	"testing"
-	"time"
-	_ "time"
+    "fmt"
+    "strconv"
+    "sync"
+    "testing"
+    "time"
+    _ "time"
 
-	"github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/assert"
 )
 
 // TestHelloWorld
 func TestBucket(t *testing.T) {
-    bucket := NewBucket(1* time.Second)
+    bucket := NewBucket(1 * time.Second)
 
     var wg sync.WaitGroup
 
@@ -30,7 +30,7 @@ func TestBucket(t *testing.T) {
     }
     wg.Wait()
     assert.EqualValues(t, 10, len(bucket.counters), "The bucket should contain 10 counters.")
-    
+
     assert.Equal(t, false, bucket.Get("bucket 0").reseted, "The counter should not be reseted.")
     assert.EqualValues(t, "1000", strconv.FormatUint(bucket.Get("bucket 0").counter.Get(), 10), "Each counter should be 1000.")
     assert.EqualValues(t, "1000", strconv.FormatUint(bucket.Get("bucket 1").counter.Get(), 10), "Each counter should be 1000.")
@@ -69,7 +69,7 @@ func TestBucketWithReset(t *testing.T) {
     wg.Wait()
     bucket.Print()
 
-    assert.Equal(t, 10, len(bucket.counters), "The bucket should contain 10 counters.")
+    assert.Equal(t, 10, bucket.Size(), "The bucket should contain 10 counters.")
     assert.Equal(t, "1000", strconv.FormatUint(bucket.Get("bucket 0").counter.Get(), 10), "Each counter should be 1000.")
     assert.Equal(t, "1000", strconv.FormatUint(bucket.Get("bucket 1").counter.Get(), 10), "Each counter should be 1000.")
     assert.Equal(t, "1000", strconv.FormatUint(bucket.Get("bucket 2").counter.Get(), 10), "Each counter should be 1000.")
