@@ -3,7 +3,6 @@ package main
 import (
     "bytes"
     "encoding/json"
-    "errors"
     "flag"
     "fmt"
     "io/ioutil"
@@ -11,7 +10,6 @@ import (
     "net"
     "net/http"
     "sort"
-    "strings"
     "time"
 
     "github.com/fr123k/fred-the-guardian/pkg/model"
@@ -62,6 +60,7 @@ type DNSClient interface {
 }
 
 func AutoDiscovery(pingCfg PingConfig) *ServerConfig {
+    //TODO make auto discovery lookup configurable
     txtrecords, _ := net.LookupTXT("fred.fr123k.uk")
 
     sort.Strings(txtrecords)
@@ -71,7 +70,8 @@ func AutoDiscovery(pingCfg PingConfig) *ServerConfig {
         client := &http.Client{}
         req, err := http.NewRequest("GET", fmt.Sprintf("http://%s%sstatus", host, path), nil)
         if err != nil {
-            panic(err)
+            log.Printf(err.Error())
+            continue
         }
         req.Header.Set("X-SECRET-KEY", pingCfg.Secret())
         resp, err := client.Do(req)
@@ -123,14 +123,13 @@ type WaitFnc = func(time.Duration)
 
 func DoPingRequest(url string, pingCfg PingConfig, wait WaitFnc) {
     log.Printf("Call fred %s\n", url)
-    client := &http.Client{}
-    payloadBuf := new(bytes.Buffer)
 
     pingRequest := model.PingRequest{
         Request: "ping",
     }
-
     log.Printf("Request: %s\n", utility.PrettyPrint(pingRequest))
+
+    payloadBuf := new(bytes.Buffer)
     json.NewEncoder(payloadBuf).Encode(pingRequest)
 
     req, err := http.NewRequest("POST", url, payloadBuf)
@@ -140,6 +139,7 @@ func DoPingRequest(url string, pingCfg PingConfig, wait WaitFnc) {
     req.Header.Set("Content-Type", "application/json")
     req.Header.Set("X-SECRET-KEY", pingCfg.Secret())
 
+    client := &http.Client{}
     r, err := client.Do(req)
     if err != nil {
         log.Printf("Error calling fred '%s'\n", err)
@@ -148,29 +148,40 @@ func DoPingRequest(url string, pingCfg PingConfig, wait WaitFnc) {
     
     switch r.StatusCode {
         case http.StatusOK:
-            var pongRsp model.PongResponse
-            err = json.NewDecoder(r.Body).Decode(&pongRsp)
-            if err != nil {
-                log.Printf("Error json decoding '%s'\n", err)
-                return
-            }
-            defer r.Body.Close()
-            log.Printf("Response: %v", utility.PrettyPrint(pongRsp))
+            HandlePongResponse(r)
 
         case http.StatusTooManyRequests:
-            var rateRsp model.RateLimitResponse
-            err = json.NewDecoder(r.Body).Decode(&rateRsp)
-            if err != nil {
-                log.Printf("Error json decoding '%s'\n", err)
-                return
-            }
-            log.Printf("Response: %v", utility.PrettyPrint(rateRsp))
-            wait(time.Duration(rateRsp.Wait) * time.Second)
-            defer r.Body.Close()
+            HandleRateLimitResponse(r, wait)
+
         default:
             bodyText, _ := ioutil.ReadAll(r.Body)
             log.Printf("Response: %s", string(bodyText))
     }
+}
+
+func HandlePongResponse(r *http.Response) (*model.PongResponse, error) {
+    var pongRsp model.PongResponse
+    err := json.NewDecoder(r.Body).Decode(&pongRsp)
+    if err != nil {
+        log.Printf("Error json decoding '%s'\n", err)
+        return nil, err
+    }
+    defer r.Body.Close()
+    log.Printf("Response: %v", utility.PrettyPrint(pongRsp))
+    return &pongRsp, nil
+}
+
+func HandleRateLimitResponse(r *http.Response, wait WaitFnc) (*model.RateLimitResponse, error) {
+    var rateRsp model.RateLimitResponse
+    err := json.NewDecoder(r.Body).Decode(&rateRsp)
+    if err != nil {
+        log.Printf("Error json decoding '%s'\n", err)
+        return nil, err
+    }
+    defer r.Body.Close()
+    log.Printf("Response: %v", utility.PrettyPrint(rateRsp))
+    return &rateRsp, nil
+
 }
 
 func PingClient(pingCfg PingConfig) (string, PingConfig) {
