@@ -57,19 +57,6 @@ func (p PingConfig) Secret() string {
     return p.secret
 }
 
-func prettyPrint(i interface{}) string {
-    s, _ := json.MarshalIndent(i, "", "\t")
-    return string(s)
-}
-
-func SplitIntoTwoVars(str string, sep string) (string, string, error) {
-    s := strings.Split(str, sep)
-    if len(s) < 3 {
-        return "", "", errors.New("Minimum match not found")
-    }
-    return s[1], s[2], nil
-}
-
 type DNSClient interface {
     LookupTXT(name string) ([]string, error)
 }
@@ -79,8 +66,8 @@ func AutoDiscovery(pingCfg PingConfig) *ServerConfig {
 
     sort.Strings(txtrecords)
     for _, txt := range txtrecords {
-        host, path, _ := SplitIntoTwoVars(txt, " ")
-        fmt.Printf("Auto Discovery try %s%s\n", host, path)
+        host, path, _ := utility.SplitIntoTwoVars(txt, " ")
+        log.Printf("Auto Discovery try %s%s\n", host, path)
         client := &http.Client{}
         req, err := http.NewRequest("GET", fmt.Sprintf("http://%s%sstatus", host, path), nil)
         if err != nil {
@@ -143,7 +130,7 @@ func DoPingRequest(url string, pingCfg PingConfig, wait WaitFnc) {
         Request: "ping",
     }
 
-    log.Printf("Request: %s\n", prettyPrint(pingRequest))
+    log.Printf("Request: %s\n", utility.PrettyPrint(pingRequest))
     json.NewEncoder(payloadBuf).Encode(pingRequest)
 
     req, err := http.NewRequest("POST", url, payloadBuf)
@@ -168,7 +155,7 @@ func DoPingRequest(url string, pingCfg PingConfig, wait WaitFnc) {
                 return
             }
             defer r.Body.Close()
-            log.Printf("Response: %v", prettyPrint(pongRsp))
+            log.Printf("Response: %v", utility.PrettyPrint(pongRsp))
 
         case http.StatusTooManyRequests:
             var rateRsp model.RateLimitResponse
@@ -177,7 +164,7 @@ func DoPingRequest(url string, pingCfg PingConfig, wait WaitFnc) {
                 log.Printf("Error json decoding '%s'\n", err)
                 return
             }
-            log.Printf("Response: %v", prettyPrint(rateRsp))
+            log.Printf("Response: %v", utility.PrettyPrint(rateRsp))
             wait(time.Duration(rateRsp.Wait) * time.Second)
             defer r.Body.Close()
         default:
