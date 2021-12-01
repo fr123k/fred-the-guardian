@@ -25,9 +25,11 @@ var (
 type PongResponse struct {
     Response string `json:"response"`
 }
+
 type PingRequest struct {
     Request string `json:"request" validate:"required"`
 }
+
 type ErrorResponse struct {
     Message string `json:"message"`
     Error   string `json:"error"`
