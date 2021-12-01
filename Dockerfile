@@ -1,5 +1,4 @@
 # Accept the Go version for the image to be set as a build argument.
-# Default to Go 1.12
 ARG GO_VERSION=1.17
 
 # Second stage: build the executable
@@ -28,8 +27,6 @@ WORKDIR /ping
 COPY go.mod ./
 COPY go.sum ./
 COPY vendor ./vendor
-RUN ls -lha
-#RUN go mod vendor
 
 # Import the code from the first stage.
 # COPY --from=code /infra-hook ./
@@ -69,9 +66,9 @@ EXPOSE 8080
 COPY --from=builder /user/group /user/passwd /etc/
 
 # Import the Certificate-Authority certificates for enabling HTTPS.
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+# COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-# Import the compiled executable frmo the second stage.
+# Import the compiled executable from the second stage.
 COPY --from=builder /app /app
 
 # Run the container as an unprivileged user.
