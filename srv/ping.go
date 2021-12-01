@@ -125,12 +125,12 @@ func GlobalCounterMiddleware(maxCnt uint, duration time.Duration) mux.Middleware
 
 // Middleware function, which will be called for each request
 // TODO add name to identify it in logs and tests
-func BucketCountersMiddleware(maxCnt uint, duration time.Duration) mux.MiddlewareFunc {
+func BucketCountersMiddleware(key string, maxCnt uint, duration time.Duration) mux.MiddlewareFunc {
     counter := counter.NewBucket(duration)
     return func(h http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             // will trigger request processing
-            secKey := r.Header.Get("X-SECRET-KEY")
+            secKey := r.Header.Get(key)
             rate := counter.Increment(secKey)
             if rate.Count > uint64(maxCnt) {
                 w.WriteHeader(http.StatusTooManyRequests)
@@ -171,6 +171,6 @@ func enableGlobalRateLimit(router *mux.Router) *mux.Router {
 }
 
 func enableBucketRateLimit(router *mux.Router) *mux.Router {
-    router.Use(BucketCountersMiddleware(10, 1 * time.Minute))
+    router.Use(BucketCountersMiddleware("X-SECRET-KEY", 10, 1 * time.Minute))
     return router
 }

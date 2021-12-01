@@ -1,9 +1,9 @@
 package counter
 
 import (
-	"math"
-	"sync"
-	"time"
+    "math"
+    "sync"
+    "time"
 )
 
 type RateLimit struct {
