@@ -1,6 +1,6 @@
 .PHONY: build
 
-VERSION=3.2
+VERSION=3.3
 PORT?=8080
 export NAME=fr123k/fred-the-guardian
 export IMAGE="${NAME}:${VERSION}"
