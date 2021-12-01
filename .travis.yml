@@ -13,7 +13,7 @@ go:
 env:
   global:
     - GO111MODULE=on
-  
+
 services:
   - docker
 
@@ -21,7 +21,7 @@ before_install:
   - echo "install external dependencies"
 
 script:
-  - make build
+  - make build-all
 
 after_script:
   - make clean

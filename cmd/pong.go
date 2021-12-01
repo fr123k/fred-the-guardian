@@ -70,7 +70,11 @@ func SplitIntoTwoVars(str string, sep string) (string, string, error) {
     return s[1], s[2], nil
 }
 
-func autoDiscovery(pingCfg PingConfig) *ServerConfig {
+type DNSClient interface {
+    LookupTXT(name string) ([]string, error)
+}
+
+func AutoDiscovery(pingCfg PingConfig) *ServerConfig {
     txtrecords, _ := net.LookupTXT("fred.fr123k.uk")
 
     sort.Strings(txtrecords)
@@ -128,46 +132,52 @@ func parseArgs() PingConfig {
     }
 }
 
-func ping() {
+func DoPingRequest(url string, pingCfg PingConfig) {
+    log.Printf("Call fred %s\n", url)
+    client := &http.Client{}
+    payloadBuf := new(bytes.Buffer)
 
-    pingCfg := parseArgs()
-
-    if pingCfg.AutoDiscovery {
-        serverCfg := autoDiscovery(pingCfg)
-        if serverCfg != nil {
-            pingCfg.ServerConfig = *serverCfg
-        }
-    }
     pingRequest := model.PingRequest{
         Request: "ping",
     }
 
     fmt.Printf("Body %s\n", prettyPrint(pingRequest))
+    json.NewEncoder(payloadBuf).Encode(pingRequest)
+
+    req, err := http.NewRequest("POST", url, payloadBuf)
+    if err != nil {
+        panic(err)
+    }
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("X-SECRET-KEY", pingCfg.Secret())
+
+    resp, err := client.Do(req)
+    if err != nil {
+        log.Printf("Error calling Jenkins '%s'\n", err)
+        return
+    }
+    bodyText, err := ioutil.ReadAll(resp.Body)
+    log.Printf("response %s", string(bodyText))
+}
+
+func PingClient(pingCfg PingConfig) (string, PingConfig) {
+    if pingCfg.AutoDiscovery {
+        serverCfg := AutoDiscovery(pingCfg)
+        if serverCfg != nil {
+            pingCfg.ServerConfig = *serverCfg
+        }
+    }
 
     url := fmt.Sprintf("http://%s%sping", pingCfg.Host(), pingCfg.Path())
+    return url, pingCfg
+}
+
+func ping() {
+    pingCfg := parseArgs()
+
+    url, pingCfg := PingClient(pingCfg)
     for {
-        log.Printf("Call fred %s\n", url)
-        client := &http.Client{}
-        payloadBuf := new(bytes.Buffer)
-
-        json.NewEncoder(payloadBuf).Encode(model.PingRequest{
-            Request: "ping",
-        })
-
-        req, err := http.NewRequest("POST", url, payloadBuf)
-        if err != nil {
-            panic(err)
-        }
-        req.Header.Set("Content-Type", "application/json")
-        req.Header.Set("X-SECRET-KEY", pingCfg.Secret())
-
-        resp, err := client.Do(req)
-        if err != nil {
-            log.Printf("Error calling Jenkins '%s'\n", err)
-            return
-        }
-        bodyText, err := ioutil.ReadAll(resp.Body)
-        log.Printf("response %s", string(bodyText))
+        DoPingRequest(url, pingCfg)
         time.Sleep(1 * time.Second)
     }
 }
