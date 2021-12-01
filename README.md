@@ -148,8 +148,8 @@ This would be the road map for a self developed rate limiting service.
    * [x] implement the rate policy tests
  * [x] refactor the ping service reduce code lines and abstract general behavior
  * [x] add pong cli test
- * [ ] implement pong cli handling of rate limit responses
- * [ ] refactor the pong cli reduce code lines and abstract general behavior
+ * [x] implement pong cli handling of rate limit responses
+ * [x] refactor the pong cli reduce code lines and abstract general behavior
 
 #### Version 4
 
