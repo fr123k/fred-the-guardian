@@ -25,7 +25,7 @@ build-cli:
 	go build -o build/pong cmd/pong.go
 	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./cmd
 
-coverage: build
+coverage:
 	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./...
 	go tool cover -html=build/cover.tmp
 
