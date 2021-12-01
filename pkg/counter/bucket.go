@@ -35,6 +35,10 @@ func (b *Bucket) Get(key string) *RateLimit {
     return b.counters[key]
 }
 
+func (b *Bucket) Size() int {
+    return len(b.counters)
+}
+
 func (b *Bucket) Print() {
     for k, v := range b.counters {
         fmt.Println(k, "value is", strconv.FormatUint(*v.counter.count, 10))

@@ -69,7 +69,7 @@ func BucketCountersMiddleware(header string, maxCnt uint, duration time.Duration
                 // will stop request processing
                 return
             }
-            log.Printf("Bucket Rate %v", rate)
+            log.Printf("Bucket Rate %v, %d", rate, counter.Size())
             h.ServeHTTP(w, r)
             return
         })
