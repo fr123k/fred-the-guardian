@@ -18,8 +18,19 @@ import (
     "github.com/stretchr/testify/assert"
 )
 
+func HttpServerStub(t *testing.T, handlerFunc http.HandlerFunc) (*httptest.Server, *url.URL) {
+    server := httptest.NewServer(handlerFunc)
+    t.Cleanup(server.Close)
+
+    url, err := url.Parse(server.URL)
+    if err != nil {
+        panic(err)
+    }
+    return server, url
+}
+
 func PingStubRateLimitExceeded(t *testing.T) (*httptest.Server, *url.URL) {
-    server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    return HttpServerStub(t, func(w http.ResponseWriter, r *http.Request) {
         switch r.RequestURI {
         case "/status":
             w.WriteHeader(http.StatusOK)
@@ -32,18 +43,11 @@ func PingStubRateLimitExceeded(t *testing.T) (*httptest.Server, *url.URL) {
             http.Error(w, "not found", http.StatusNotFound)
             return
         }
-    }))
-    t.Cleanup(server.Close)
-
-    url, err := url.Parse(server.URL)
-    if err != nil {
-        panic(err)
-    }
-    return server, url
+    })
 }
 
 func PingStub(t *testing.T) (*httptest.Server, *url.URL) {
-    server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    return HttpServerStub(t, func(w http.ResponseWriter, r *http.Request) {
         switch r.RequestURI {
         case "/status":
             w.WriteHeader(http.StatusOK)
@@ -58,14 +62,7 @@ func PingStub(t *testing.T) (*httptest.Server, *url.URL) {
             http.Error(w, "not found", http.StatusNotFound)
             return
         }
-    }))
-    t.Cleanup(server.Close)
-
-    url, err := url.Parse(server.URL)
-    if err != nil {
-        panic(err)
-    }
-    return server, url
+    })
 }
 
 func DNSStub(t *testing.T, u *url.URL) {
@@ -79,20 +76,15 @@ func DNSStub(t *testing.T, u *url.URL) {
         },
     }, log, false)
 
-    // defer srv.Close()
     t.Cleanup(func() {
+        mockdns.UnpatchNet(net.DefaultResolver)
         srv.Close()
     })
 
     srv.PatchNet(net.DefaultResolver)
-    // defer mockdns.UnpatchNet(net.DefaultResolver)
-    t.Cleanup(func() {
-        mockdns.UnpatchNet(net.DefaultResolver)
-    })
 }
 
 func TestAutodiscovery(t *testing.T) {
-
     _, u := PingStub(t)
     DNSStub(t, u)
 
@@ -102,7 +94,6 @@ func TestAutodiscovery(t *testing.T) {
 }
 
 func TestAutodiscoveryFail(t *testing.T) {
-
     u := url.URL{
         Host: "127.0.0.1:36579",
     }
@@ -125,7 +116,6 @@ func DefaultPingConfig() PingConfig {
 }
 
 func TestParseArgs(t *testing.T) {
-
     pngConfig := parseArgs()
 
     assert.Equal(t, DEFAULT_HOST, pngConfig.Server, "Server as expected")
@@ -140,8 +130,7 @@ func TestPingClient(t *testing.T) {
     assert.Equal(t, DEFAULT_HOST, pngConfig.Server, "Server as expected")
 }
 
-func TestPing(t *testing.T) {
-
+func TestPong(t *testing.T) {
     _, u := PingStub(t)
     DNSStub(t, u)
 
@@ -156,8 +145,7 @@ func TestPing(t *testing.T) {
     assert.Equal(t, u.Port(), srvCfg.Port, "Server as expected")
 }
 
-func TestPingRateLimitExceeded(t *testing.T) {
-
+func TestPongRateLimitExceeded(t *testing.T) {
     _, u := PingStubRateLimitExceeded(t)
     DNSStub(t, u)
 
