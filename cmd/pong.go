@@ -132,7 +132,9 @@ func parseArgs() PingConfig {
     }
 }
 
-func DoPingRequest(url string, pingCfg PingConfig) {
+type WaitFnc = func(time.Duration)
+
+func DoPingRequest(url string, pingCfg PingConfig, wait WaitFnc) {
     log.Printf("Call fred %s\n", url)
     client := &http.Client{}
     payloadBuf := new(bytes.Buffer)
@@ -141,7 +143,7 @@ func DoPingRequest(url string, pingCfg PingConfig) {
         Request: "ping",
     }
 
-    fmt.Printf("Body %s\n", prettyPrint(pingRequest))
+    log.Printf("Request: %s\n", prettyPrint(pingRequest))
     json.NewEncoder(payloadBuf).Encode(pingRequest)
 
     req, err := http.NewRequest("POST", url, payloadBuf)
@@ -151,13 +153,37 @@ func DoPingRequest(url string, pingCfg PingConfig) {
     req.Header.Set("Content-Type", "application/json")
     req.Header.Set("X-SECRET-KEY", pingCfg.Secret())
 
-    resp, err := client.Do(req)
+    r, err := client.Do(req)
     if err != nil {
-        log.Printf("Error calling Jenkins '%s'\n", err)
+        log.Printf("Error calling fred '%s'\n", err)
         return
     }
-    bodyText, err := ioutil.ReadAll(resp.Body)
-    log.Printf("response %s", string(bodyText))
+    
+    switch r.StatusCode {
+        case http.StatusOK:
+            var pongRsp model.PongResponse
+            err = json.NewDecoder(r.Body).Decode(&pongRsp)
+            if err != nil {
+                log.Printf("Error json decoding '%s'\n", err)
+                return
+            }
+            defer r.Body.Close()
+            log.Printf("Response: %v", prettyPrint(pongRsp))
+
+        case http.StatusTooManyRequests:
+            var rateRsp model.RateLimitResponse
+            err = json.NewDecoder(r.Body).Decode(&rateRsp)
+            if err != nil {
+                log.Printf("Error json decoding '%s'\n", err)
+                return
+            }
+            log.Printf("Response: %v", prettyPrint(rateRsp))
+            wait(time.Duration(rateRsp.Wait) * time.Second)
+            defer r.Body.Close()
+        default:
+            bodyText, _ := ioutil.ReadAll(r.Body)
+            log.Printf("Response: %s", string(bodyText))
+    }
 }
 
 func PingClient(pingCfg PingConfig) (string, PingConfig) {
@@ -177,7 +203,10 @@ func ping() {
 
     url, pingCfg := PingClient(pingCfg)
     for {
-        DoPingRequest(url, pingCfg)
+        DoPingRequest(url, pingCfg, func(duration time.Duration){
+            log.Printf("Wait for %s that the rate limit can cool down.\n", duration)
+            time.Sleep(duration)
+        })
         time.Sleep(1 * time.Second)
     }
 }
