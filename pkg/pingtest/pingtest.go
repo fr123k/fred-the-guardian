@@ -25,6 +25,7 @@ type HttpTestExpect struct {
 }
 
 type HttpTest struct {
+    Name   string
     Body   *string
     Secret *string
     Method string
@@ -33,6 +34,7 @@ type HttpTest struct {
 }
 
 type StatusTest struct {
+    Name   string
     Body   *string
     Secret *string
     Method string `default:"GET"`
@@ -41,6 +43,7 @@ type StatusTest struct {
 }
 
 type PingTest struct {
+    Name   string
     Body   *string
     Secret *string
     Method string `default:"POST"`
@@ -51,10 +54,11 @@ type PingTest struct {
 func (p *PingTest) toTest() HttpTest {
     defaults.SetDefaults(p)
     return HttpTest{
-        Body: p.Body,
+        Name:   p.Name,
+        Body:   p.Body,
         Secret: p.Secret,
         Method: p.Method,
-        Path: p.Path,
+        Path:   p.Path,
         Expect: p.Expect,
     }
 }
@@ -62,10 +66,11 @@ func (p *PingTest) toTest() HttpTest {
 func (s *StatusTest) toTest() HttpTest {
     defaults.SetDefaults(s)
     return HttpTest{
-        Body: s.Body,
+        Name:   s.Name,
+        Body:   s.Body,
         Secret: s.Secret,
         Method: s.Method,
-        Path: s.Path,
+        Path:   s.Path,
         Expect: s.Expect,
     }
 }
@@ -133,34 +138,34 @@ func PingPayloadResponse(response string) string {
     return fmt.Sprintf("%s\n", string(str))
 }
 
-type toHttpTestFunc func(map[string]HttpTest) 
+type toHttpTestFunc func([]HttpTest)
 
 //TODO check if this boilerplate code can be reduced
-func toHttpTest(size uint, f toHttpTestFunc) map[string]HttpTest {
-    httpTests := make(map[string]HttpTest, size)
+func toHttpTest(size uint, f toHttpTestFunc) []HttpTest {
+    httpTests := make([]HttpTest, size)
     f(httpTests)
     return httpTests
 }
 
-func PingToHttpTests(tests map[string]PingTest) map[string]HttpTest {
-    return toHttpTest(uint(len(tests)), func(httpTests map[string]HttpTest) {
-        for name, tc := range tests {
-            httpTests[name] = tc.toTest()
+func PingToHttpTests(tests []PingTest) []HttpTest {
+    return toHttpTest(uint(len(tests)), func(httpTests []HttpTest) {
+        for i, tc := range tests {
+            httpTests[i] = tc.toTest()
         }
     })
 }
 
-func StatusToHttpTests(tests map[string]StatusTest) map[string]HttpTest {
-    return toHttpTest(uint(len(tests)), func(httpTests map[string]HttpTest) {
-        for name, tc := range tests {
-            httpTests[name] = tc.toTest()
+func StatusToHttpTests(tests []StatusTest) []HttpTest {
+    return toHttpTest(uint(len(tests)), func(httpTests []HttpTest) {
+        for i, tc := range tests {
+            httpTests[i] = tc.toTest()
         }
     })
 }
 
-func RunHttpTests(tests map[string]HttpTest, rt *mux.Router, t *testing.T) {
-    for name, tc := range tests {
-        t.Run(name, func(t *testing.T) {
+func RunHttpTests(tests []HttpTest, rt *mux.Router, t *testing.T) {
+    for _, tc := range tests {
+        t.Run(tc.Name, func(t *testing.T) {
             r, _ := http.NewRequest(tc.Method, tc.Path, tc.Body_())
             if tc.Secret != nil {
                 r.Header.Set("X-SECRET-KEY", tc.Secret_())
@@ -169,7 +174,7 @@ func RunHttpTests(tests map[string]HttpTest, rt *mux.Router, t *testing.T) {
 
             rt.ServeHTTP(w, r)
 
-            assert.Equal(t, tc.Expect.Code, w.Code, name)
+            assert.Equal(t, tc.Expect.Code, w.Code, tc.Name)
             assert.Equal(t, *tc.Expect.Body, w.Body.String())
         })
     }

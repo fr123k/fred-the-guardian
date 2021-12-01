@@ -1,23 +1,25 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"testing"
+    "fmt"
+    "net/http"
+    "testing"
 
-	. "github.com/fr123k/fred-the-guardian/pkg/pingtest"
+    . "github.com/fr123k/fred-the-guardian/pkg/pingtest"
 )
 
 func TestStatus(t *testing.T) {
-    tests := map[string]StatusTest{
-        "missing secret key": {
-            Body:   nil,
+    tests := []StatusTest{
+        {
+            Name: "missing secret key",
+            Body: nil,
             Expect: HttpTestExpect{
                 Code: http.StatusUnauthorized,
                 Body: StringPtr(ExpectMissingHttpHeader()),
             },
         },
-        "secret key": {
+        {
+            Name:   "secret key",
             Body:   nil,
             Secret: StringPtr("secret"),
             Expect: HttpTestExpect{
@@ -31,15 +33,17 @@ func TestStatus(t *testing.T) {
 }
 
 func TestPing(t *testing.T) {
-    tests := map[string]PingTest{
-        "missing secret key": {
+    tests := []PingTest{
+        {
+            Name: "missing secret key",
             Body: nil,
             Expect: HttpTestExpect{
                 Code: http.StatusUnauthorized,
                 Body: StringPtr(ExpectMissingHttpHeader()),
             },
         },
-        "empty payload": {
+        {
+            Name:   "empty payload",
             Body:   nil,
             Secret: StringPtr("secret"),
             Expect: HttpTestExpect{
@@ -47,7 +51,8 @@ func TestPing(t *testing.T) {
                 Body: StringPtr(ExpectMissingProperPayload()),
             },
         },
-        "non json payload": {
+        {
+            Name:   "non json payload",
             Body:   StringPtr("thats not a json payload"),
             Secret: StringPtr("secret"),
             Expect: HttpTestExpect{
@@ -55,7 +60,8 @@ func TestPing(t *testing.T) {
                 Body: StringPtr(ExpectInvalidRequest("invalid character 'h' in literal true (expecting 'r')")),
             },
         },
-        "malformed payload": {
+        {
+            Name:   "malformed payload",
             Body:   StringPtr(MalformedBodyRequest("malformed body")),
             Secret: StringPtr("secret"),
             Expect: HttpTestExpect{
@@ -63,7 +69,8 @@ func TestPing(t *testing.T) {
                 Body: StringPtr(ExpectInvalidRequest("Key: 'PingRequest.request' Error:Field validation for 'request' failed on the 'required' tag")),
             },
         },
-        "ping request": {
+        {
+            Name:   "ping request",
             Body:   StringPtr(PingPayloadRequest("ping")),
             Secret: StringPtr("secret"),
             Expect: HttpTestExpect{
@@ -71,7 +78,8 @@ func TestPing(t *testing.T) {
                 Body: StringPtr(PingPayloadResponse("pong")),
             },
         },
-        "foobar request": {
+        {
+            Name:   "foobar request",
             Body:   StringPtr(PingPayloadRequest("foobar")),
             Secret: StringPtr("secret"),
             Expect: HttpTestExpect{
@@ -85,8 +93,9 @@ func TestPing(t *testing.T) {
 }
 
 func TestPingWithGlobalRateLimit(t *testing.T) {
-    tests := map[string]PingTest{
-        "ping request": {
+    tests := []PingTest{
+        {
+            Name:   "ping request",
             Body:   StringPtr(PingPayloadRequest("ping")),
             Secret: StringPtr("secret"),
             Expect: HttpTestExpect{
@@ -94,7 +103,8 @@ func TestPingWithGlobalRateLimit(t *testing.T) {
                 Body: StringPtr(PingPayloadResponse("pong")),
             },
         },
-        "foobar request": {
+        {
+            Name:   "foobar request",
             Body:   StringPtr(PingPayloadRequest("foobar")),
             Secret: StringPtr("secret"),
             Expect: HttpTestExpect{
@@ -102,7 +112,8 @@ func TestPingWithGlobalRateLimit(t *testing.T) {
                 Body: StringPtr(PingPayloadResponse("foobar")),
             },
         },
-        "rate limit exceeded": {
+        {
+            Name:   "rate limit exceeded",
             Body:   StringPtr(PingPayloadRequest("foobar")),
             Secret: StringPtr("secret"),
             Expect: HttpTestExpect{
@@ -115,10 +126,11 @@ func TestPingWithGlobalRateLimit(t *testing.T) {
     RunHttpTests(PingToHttpTests(tests), enableGlobalRateLimit(router), t)
 }
 
-func multipleRequests(cnt uint) map[string]PingTest {
-    tests := map[string]PingTest{}
+func multipleRequests(cnt uint) []PingTest {
+    tests := make([]PingTest, cnt)
     for i := 0; i < 10; i++ {
-        tests[fmt.Sprintf("ping request %d", i)] = PingTest{
+        tests[i] = PingTest{
+            Name:   fmt.Sprintf("ping request %d", i),
             Body:   StringPtr(PingPayloadRequest("ping")),
             Secret: StringPtr("secret"),
             Expect: HttpTestExpect{
@@ -132,8 +144,9 @@ func multipleRequests(cnt uint) map[string]PingTest {
 
 func TestPingWithBucketRateLimit(t *testing.T) {
     tests := multipleRequests(10)
-    rateLimitExceeded := map[string]PingTest{
-        "rate limit exceeded": {
+    rateLimitExceeded := []PingTest{
+        {
+            Name:   "rate limit exceeded",
             Body:   StringPtr(PingPayloadRequest("foobar")),
             Secret: StringPtr("secret"),
             Expect: HttpTestExpect{
