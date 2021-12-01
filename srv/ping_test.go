@@ -9,8 +9,8 @@ import (
 )
 
 func TestStatus(t *testing.T) {
-    tests := []StatusTest{
-        {
+    tests := []TestCase{
+        StatusTest{
             Name: "missing secret key",
             Body: nil,
             Expect: HttpTestExpect{
@@ -18,7 +18,7 @@ func TestStatus(t *testing.T) {
                 Body: StringPtr(ExpectMissingHttpHeader()),
             },
         },
-        {
+        StatusTest{
             Name:   "secret key",
             Body:   nil,
             Secret: StringPtr("secret"),
@@ -29,12 +29,12 @@ func TestStatus(t *testing.T) {
         },
     }
 
-    RunHttpTests(StatusToHttpTests(tests), startRouter(), t)
+    RunHttpTests(tests, startRouter(), t)
 }
 
 func TestPing(t *testing.T) {
-    tests := []PingTest{
-        {
+    tests := []TestCase{
+        PingTest{
             Name: "missing secret key",
             Body: nil,
             Expect: HttpTestExpect{
@@ -42,7 +42,7 @@ func TestPing(t *testing.T) {
                 Body: StringPtr(ExpectMissingHttpHeader()),
             },
         },
-        {
+        PingTest{
             Name:   "empty payload",
             Body:   nil,
             Secret: StringPtr("secret"),
@@ -51,7 +51,7 @@ func TestPing(t *testing.T) {
                 Body: StringPtr(ExpectMissingProperPayload()),
             },
         },
-        {
+        PingTest{
             Name:   "non json payload",
             Body:   StringPtr("thats not a json payload"),
             Secret: StringPtr("secret"),
@@ -60,7 +60,7 @@ func TestPing(t *testing.T) {
                 Body: StringPtr(ExpectInvalidRequest("invalid character 'h' in literal true (expecting 'r')")),
             },
         },
-        {
+        PingTest{
             Name:   "malformed payload",
             Body:   StringPtr(MalformedBodyRequest("malformed body")),
             Secret: StringPtr("secret"),
@@ -69,7 +69,7 @@ func TestPing(t *testing.T) {
                 Body: StringPtr(ExpectInvalidRequest("Key: 'PingRequest.request' Error:Field validation for 'request' failed on the 'required' tag")),
             },
         },
-        {
+        PingTest{
             Name:   "ping request",
             Body:   StringPtr(PingPayloadRequest("ping")),
             Secret: StringPtr("secret"),
@@ -78,7 +78,7 @@ func TestPing(t *testing.T) {
                 Body: StringPtr(PingPayloadResponse("pong")),
             },
         },
-        {
+        PingTest{
             Name:   "foobar request",
             Body:   StringPtr(PingPayloadRequest("foobar")),
             Secret: StringPtr("secret"),
@@ -89,12 +89,12 @@ func TestPing(t *testing.T) {
         },
     }
 
-    RunHttpTests(PingToHttpTests(tests), startRouter(), t)
+    RunHttpTests(tests, startRouter(), t)
 }
 
 func TestPingWithGlobalRateLimit(t *testing.T) {
-    tests := []PingTest{
-        {
+    tests := []TestCase{
+        PingTest{
             Name:   "ping request",
             Body:   StringPtr(PingPayloadRequest("ping")),
             Secret: StringPtr("secret"),
@@ -103,7 +103,7 @@ func TestPingWithGlobalRateLimit(t *testing.T) {
                 Body: StringPtr(PingPayloadResponse("pong")),
             },
         },
-        {
+        PingTest{
             Name:   "foobar request",
             Body:   StringPtr(PingPayloadRequest("foobar")),
             Secret: StringPtr("secret"),
@@ -112,7 +112,7 @@ func TestPingWithGlobalRateLimit(t *testing.T) {
                 Body: StringPtr(PingPayloadResponse("foobar")),
             },
         },
-        {
+        PingTest{
             Name:   "rate limit exceeded",
             Body:   StringPtr(PingPayloadRequest("foobar")),
             Secret: StringPtr("secret"),
@@ -123,11 +123,11 @@ func TestPingWithGlobalRateLimit(t *testing.T) {
         },
     }
     router := startRouter()
-    RunHttpTests(PingToHttpTests(tests), enableGlobalRateLimit(router), t)
+    RunHttpTests(tests, enableGlobalRateLimit(router), t)
 }
 
-func multipleRequests(cnt uint) []PingTest {
-    tests := make([]PingTest, cnt)
+func multipleRequests(cnt uint) []TestCase {
+    tests := make([]TestCase, cnt)
     for i := 0; i < 10; i++ {
         tests[i] = PingTest{
             Name:   fmt.Sprintf("ping request %d", i),
@@ -144,8 +144,8 @@ func multipleRequests(cnt uint) []PingTest {
 
 func TestPingWithBucketRateLimit(t *testing.T) {
     tests := multipleRequests(10)
-    rateLimitExceeded := []PingTest{
-        {
+    rateLimitExceeded := []TestCase{
+        PingTest{
             Name:   "rate limit exceeded",
             Body:   StringPtr(PingPayloadRequest("foobar")),
             Secret: StringPtr("secret"),
@@ -157,7 +157,6 @@ func TestPingWithBucketRateLimit(t *testing.T) {
     }
     router := startRouter()
     router = enableBucketRateLimit(router)
-    RunHttpTests(PingToHttpTests(tests), router, t)
-    RunHttpTests(PingToHttpTests(rateLimitExceeded), router, t)
-
+    RunHttpTests(tests, router, t)
+    RunHttpTests(rateLimitExceeded, router, t)
 }
