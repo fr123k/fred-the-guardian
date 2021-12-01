@@ -19,13 +19,17 @@ go-init:
 
 build:
 	go build -o build/main srv/ping.go
-	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./...
+	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./srv ./pkg/...
 
 build-cli:
 	go build -o build/pong cmd/pong.go
+	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./cmd
 
 coverage: build
+	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./...
 	go tool cover -html=build/cover.tmp
+
+build-all: build build-cli
 
 run: build
 	./build/main
