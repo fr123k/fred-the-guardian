@@ -11,11 +11,36 @@ import (
     "net/url"
     "os"
     "testing"
+    "time"
 
     "github.com/foxcpp/go-mockdns"
     "github.com/fr123k/fred-the-guardian/pkg/model"
     "github.com/stretchr/testify/assert"
 )
+
+func PingStubRateLimitExceeded(t *testing.T) (*httptest.Server, *url.URL) {
+    server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        switch r.RequestURI {
+        case "/status":
+            w.WriteHeader(http.StatusOK)
+            return
+        case "/ping":
+            w.WriteHeader(http.StatusTooManyRequests)
+            w.Header().Set("Content-Type", "application/json")
+            json.NewEncoder(w).Encode(model.TooManyRequests(13, 16))
+        default:
+            http.Error(w, "not found", http.StatusNotFound)
+            return
+        }
+    }))
+    t.Cleanup(server.Close)
+
+    url, err := url.Parse(server.URL)
+    if err != nil {
+        panic(err)
+    }
+    return server, url
+}
 
 func PingStub(t *testing.T) (*httptest.Server, *url.URL) {
     server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -26,10 +51,9 @@ func PingStub(t *testing.T) (*httptest.Server, *url.URL) {
         case "/ping":
             w.WriteHeader(http.StatusOK)
             w.Header().Set("Content-Type", "application/json")
-            pong := model.PongResponse{
+            json.NewEncoder(w).Encode(model.PongResponse{
                 Response: "pong",
-            }
-            json.NewEncoder(w).Encode(pong)
+            })
         default:
             http.Error(w, "not found", http.StatusNotFound)
             return
@@ -124,7 +148,25 @@ func TestPing(t *testing.T) {
     pngCfg := DefaultPingConfig()
     pngCfg.AutoDiscovery = true
     url, pngConfig := PingClient(pngCfg)
-    DoPingRequest(url, pngConfig)
+    DoPingRequest(url, pngConfig, func(duration time.Duration) {
+        assert.FailNow(t, "The wait function is not expected to be called in this test.")
+    })
+    srvCfg := AutoDiscovery(PingConfig{secret: "Secret"})
+    assert.Equal(t, "127.0.0.1", srvCfg.Server, "Server as expected")
+    assert.Equal(t, u.Port(), srvCfg.Port, "Server as expected")
+}
+
+func TestPingRateLimitExceeded(t *testing.T) {
+
+    _, u := PingStubRateLimitExceeded(t)
+    DNSStub(t, u)
+
+    pngCfg := DefaultPingConfig()
+    pngCfg.AutoDiscovery = true
+    url, pngConfig := PingClient(pngCfg)
+    DoPingRequest(url, pngConfig, func(duration time.Duration) {
+        assert.Equal(t, time.Duration(16) * time.Second, duration, "Server as expected")
+    })
     srvCfg := AutoDiscovery(PingConfig{secret: "Secret"})
     assert.Equal(t, "127.0.0.1", srvCfg.Server, "Server as expected")
     assert.Equal(t, u.Port(), srvCfg.Port, "Server as expected")
