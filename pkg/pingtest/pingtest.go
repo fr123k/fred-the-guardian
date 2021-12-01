@@ -1,4 +1,4 @@
-package HttpTest
+package pingtest
 
 import (
     "encoding/json"
@@ -15,8 +15,8 @@ import (
     "github.com/stretchr/testify/assert"
 )
 
-type Test interface {
-    toTest() HttpTest
+type TestCase interface {
+    toTestCase() HttpTest
 }
 
 type HttpTestExpect struct {
@@ -51,8 +51,8 @@ type PingTest struct {
     Expect HttpTestExpect
 }
 
-func (p *PingTest) toTest() HttpTest {
-    defaults.SetDefaults(p)
+func (p PingTest) toTestCase() HttpTest {
+    defaults.SetDefaults(&p)
     return HttpTest{
         Name:   p.Name,
         Body:   p.Body,
@@ -63,8 +63,8 @@ func (p *PingTest) toTest() HttpTest {
     }
 }
 
-func (s *StatusTest) toTest() HttpTest {
-    defaults.SetDefaults(s)
+func (s StatusTest) toTestCase() HttpTest {
+    defaults.SetDefaults(&s)
     return HttpTest{
         Name:   s.Name,
         Body:   s.Body,
@@ -138,33 +138,9 @@ func PingPayloadResponse(response string) string {
     return fmt.Sprintf("%s\n", string(str))
 }
 
-type toHttpTestFunc func([]HttpTest)
-
-//TODO check if this boilerplate code can be reduced
-func toHttpTest(size uint, f toHttpTestFunc) []HttpTest {
-    httpTests := make([]HttpTest, size)
-    f(httpTests)
-    return httpTests
-}
-
-func PingToHttpTests(tests []PingTest) []HttpTest {
-    return toHttpTest(uint(len(tests)), func(httpTests []HttpTest) {
-        for i, tc := range tests {
-            httpTests[i] = tc.toTest()
-        }
-    })
-}
-
-func StatusToHttpTests(tests []StatusTest) []HttpTest {
-    return toHttpTest(uint(len(tests)), func(httpTests []HttpTest) {
-        for i, tc := range tests {
-            httpTests[i] = tc.toTest()
-        }
-    })
-}
-
-func RunHttpTests(tests []HttpTest, rt *mux.Router, t *testing.T) {
-    for _, tc := range tests {
+func RunHttpTests(tests []TestCase, rt *mux.Router, t *testing.T) {
+    for _, test := range tests {
+		tc := test.toTestCase()
         t.Run(tc.Name, func(t *testing.T) {
             r, _ := http.NewRequest(tc.Method, tc.Path, tc.Body_())
             if tc.Secret != nil {
