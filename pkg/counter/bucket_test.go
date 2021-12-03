@@ -24,6 +24,7 @@ func TestBucket(t *testing.T) {
 			for c := 0; c < 1000; c++ {
 				key := fmt.Sprintf("bucket %d", c%10)
 				bucket.Increment(key)
+				bucket.Size()
 			}
 			wg.Done()
 		}()
@@ -62,6 +63,7 @@ func TestBucketWithReset(t *testing.T) {
 			for c := 0; c < 1000; c++ {
 				key := fmt.Sprintf("bucket %d", c%10)
 				bucket.Increment(key)
+				bucket.Size()
 			}
 			wg.Done()
 		}()
@@ -69,7 +71,7 @@ func TestBucketWithReset(t *testing.T) {
 	wg.Wait()
 	bucket.Print()
 
-	assert.Equal(t, 10, bucket.Size(), "The bucket should contain 10 counters.")
+	assert.Equal(t, int32(10), bucket.Size(), "The bucket should contain 10 counters.")
 	assert.Equal(t, "1000", strconv.FormatUint(bucket.Get("bucket 0").counter.Get(), 10), "Each counter should be 1000.")
 	assert.Equal(t, "1000", strconv.FormatUint(bucket.Get("bucket 1").counter.Get(), 10), "Each counter should be 1000.")
 	assert.Equal(t, "1000", strconv.FormatUint(bucket.Get("bucket 2").counter.Get(), 10), "Each counter should be 1000.")

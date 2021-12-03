@@ -33,10 +33,11 @@ func (r *RateLimit) Increment() Rate {
 	if elapsed > r.duration {
 		// TODO add proper logging
 		// fmt.Printf("Elapsed time %s > %s \n", start.String(), r.counter.resetDate.String())
+		// TODO this lock can be removed if the access to resetDate is thread safe
 		r.mutex.Lock()
 		defer r.mutex.Unlock()
 		elapsed = start.Sub(r.counter.resetDate)
-		// double check idiom to ensure only lock when its nessary and to only reset the counter once
+		// double check idiom to ensure only lock when its necessary and to only reset the counter once
 		if elapsed > r.duration {
 			// TODO add proper logging
 			// fmt.Printf("Reset %s > %s \n", start.String(), r.counter.resetDate.String())

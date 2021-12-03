@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/fr123k/fred-the-guardian/pkg/counter"
 	"github.com/fr123k/fred-the-guardian/pkg/middleware"
 	"github.com/fr123k/fred-the-guardian/pkg/model"
 	"github.com/fr123k/fred-the-guardian/pkg/utility"
@@ -13,10 +14,19 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var (
+	bckCnt *counter.Bucket
+)
+
 type HandlerFunc = func(w http.ResponseWriter, r *http.Request)
 
 func status(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
+
+	json.NewEncoder(w).Encode(model.StatusResponse{
+		Counters: uint(bckCnt.Size()),
+		Memory:   model.MemoryUsage(),
+	})
 }
 
 func ping() HandlerFunc {
@@ -85,6 +95,7 @@ func startPingService() {
 }
 
 func startRouter() *mux.Router {
+	bckCnt = counter.NewBucket(1 * time.Minute)
 	router := mux.NewRouter()
 
 	router.HandleFunc("/ping", ping()).
@@ -103,6 +114,6 @@ func enableGlobalRateLimit(router *mux.Router) *mux.Router {
 }
 
 func enableBucketRateLimit(router *mux.Router) *mux.Router {
-	router.Use(middleware.BucketCountersMiddleware(middleware.HTTP_HEADER_SECRET_KEY, 10, 1*time.Minute))
+	router.Use(middleware.BucketCountersMiddleware(bckCnt, middleware.HTTP_HEADER_SECRET_KEY, 10))
 	return router
 }

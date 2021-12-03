@@ -138,6 +138,14 @@ func PingPayloadResponse(response string) string {
 	return fmt.Sprintf("%s\n", string(str))
 }
 
+func StatusResponse(counters uint) string {
+	str, _ := json.Marshal(model.StatusResponse{
+		Counters: counters,
+		Memory: model.MemoryUsage(),
+	})
+	return fmt.Sprintf("%s\n", string(str))
+}
+
 func RunHttpTests(tests []TestCase, rt *mux.Router, t *testing.T) {
 	for _, test := range tests {
 		tc := test.toTestCase()
