@@ -143,13 +143,14 @@ This would be the road map for a self developed rate limiting service.
 #### Version 3
 
  * [x] implement rate limiting in the ping service with in memory stored counters
- * [ ] add ping service test
+ * [x] add ping service test
    * [x] implement the edge case and happy path tests
    * [x] implement the rate policy tests
  * [x] refactor the ping service reduce code lines and abstract general behavior
  * [x] add pong cli test
  * [x] implement pong cli handling of rate limit responses
  * [x] refactor the pong cli reduce code lines and abstract general behavior
+ * [x] add number of bucket counters and memory usage to the status endpoint response
 
 #### Version 4
 

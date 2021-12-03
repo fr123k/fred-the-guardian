@@ -10,6 +10,15 @@ import (
 
 func TestStatus(t *testing.T) {
 	tests := []TestCase{
+		PingTest{
+			Name:   "ping request",
+			Body:   StringPtr(PingPayloadRequest("ping")),
+			Secret: StringPtr("secret"),
+			Expect: HttpTestExpect{
+				Code: http.StatusOK,
+				Body: StringPtr(PingPayloadResponse("pong")),
+			},
+		},
 		StatusTest{
 			Name: "missing secret key",
 			Body: nil,
@@ -19,17 +28,18 @@ func TestStatus(t *testing.T) {
 			},
 		},
 		StatusTest{
-			Name:   "secret key",
+			Name:   "status request with secret key",
 			Body:   nil,
 			Secret: StringPtr("secret"),
 			Expect: HttpTestExpect{
 				Code: http.StatusOK,
-				Body: StringPtr(""),
+				Body: StringPtr(StatusResponse(1)),
 			},
 		},
 	}
-
-	RunHttpTests(tests, startRouter(), t)
+	router := startRouter()
+	router = enableBucketRateLimit(router)
+	RunHttpTests(tests, router, t)
 }
 
 func TestPing(t *testing.T) {

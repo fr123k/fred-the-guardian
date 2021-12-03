@@ -1,6 +1,9 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+	"runtime"
+)
 
 const (
 	INVALID_REQUEST_BODY = "E400"
@@ -39,6 +42,37 @@ type ErrorResponse struct {
 type RateLimitResponse struct {
 	ErrorResponse
 	Wait int64 `json:"wait"`
+}
+
+type Memory struct {
+	Alloc uint64 `json:"alloc"`
+	TotalAlloc uint64 `json:"total_alloc"`
+	SysAlloc uint64 `json:"sys_alloc"`
+	NumGC uint32 `json:"number_gc"`
+}
+
+type StatusResponse struct {
+	Counters uint `json:"counters"`
+	Memory Memory `json:"memory"`
+}
+
+func MemoryUsage() Memory {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	return *InMegaBytes(&m)
+}
+
+func InMegaBytes (m *runtime.MemStats) *Memory {
+	return &Memory{
+		Alloc: BytesToMegaBytes(m.Alloc),
+		TotalAlloc: BytesToMegaBytes(m.TotalAlloc),
+		SysAlloc: BytesToMegaBytes(m.Sys),
+		NumGC: m.NumGC,
+	}
+}
+
+func BytesToMegaBytes(b uint64) uint64 {
+    return b / 1024 / 1024
 }
 
 func TooManyRequests(maxCnt uint, wait int64) RateLimitResponse {

@@ -56,8 +56,7 @@ func GlobalCounterMiddleware(maxCnt uint, duration time.Duration) mux.Middleware
 
 // Middleware function, which will be called for each request
 // TODO add name to identify it in logs and tests
-func BucketCountersMiddleware(header string, maxCnt uint, duration time.Duration) mux.MiddlewareFunc {
-	counter := counter.NewBucket(duration)
+func BucketCountersMiddleware(counter *counter.Bucket, header string, maxCnt uint) mux.MiddlewareFunc {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// will trigger request processing
