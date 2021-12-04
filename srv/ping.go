@@ -12,11 +12,26 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	prommiddleware "github.com/albertogviana/prometheus-middleware"
 )
 
 var (
 	bckCnt *counter.Bucket
+	rateLimitCntTotal = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "ratelimit_counter_total",
+		Help: "Number of buckets with a counter.",
+	})
 )
+
+func prometheusMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+		rateLimitCntTotal.Set(float64(bckCnt.Size()))
+	})
+}
 
 type HandlerFunc = func(w http.ResponseWriter, r *http.Request)
 
@@ -89,8 +104,10 @@ func main() {
 
 func startPingService() {
 	router := startRouter()
+	router = enablePrometheus(router)
 	router = enableGlobalRateLimit(router)
 	router = enableBucketRateLimit(router)
+
 	http.ListenAndServe(":"+utility.Env("PORT", "8080"), router)
 }
 
@@ -102,9 +119,16 @@ func startRouter() *mux.Router {
 		Methods("POST")
 	router.HandleFunc("/status", status).
 		Methods("GET")
-
+	
 	router.Use(middleware.AuthenticationMiddleware)
 
+	return router
+}
+
+func enablePrometheus(router *mux.Router) *mux.Router {
+	router.Path("/metrics").Handler(promhttp.Handler())
+	router.Use(prommiddleware.NewPrometheusMiddleware(prommiddleware.Opts{}).InstrumentHandlerDuration)
+	router.Use(prometheusMiddleware)
 	return router
 }
 
