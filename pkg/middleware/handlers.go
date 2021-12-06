@@ -39,6 +39,10 @@ func GlobalCounterMiddleware(maxCnt uint, duration time.Duration) mux.Middleware
 	counter := counter.NewRateLimit(duration)
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.RequestURI == "/metrics" {
+				h.ServeHTTP(w, r)
+				return
+			}
 			// will trigger request processing
 			rate := counter.Increment()
 			if rate.Count > uint64(maxCnt) {
@@ -59,6 +63,10 @@ func GlobalCounterMiddleware(maxCnt uint, duration time.Duration) mux.Middleware
 func BucketCountersMiddleware(counter *counter.Bucket, header string, maxCnt uint) mux.MiddlewareFunc {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.RequestURI == "/metrics" {
+				h.ServeHTTP(w, r)
+				return
+			}
 			// will trigger request processing
 			value := r.Header.Get(header)
 			rate := counter.Increment(value)
