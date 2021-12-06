@@ -152,7 +152,7 @@ This would be the road map for a self developed rate limiting service.
  * [x] refactor the pong cli reduce code lines and abstract general behavior
  * [x] add number of bucket counters and memory usage to the status endpoint response
  * [x] add prometheus metric instrumentation for monitoring
- * [ ] implement eviction of bucket counters to cleanup memory from not used counters
+ * [x] implement eviction of bucket counters to cleanup memory from not used counters
  * [ ] Update documentation to the latest implemented features
 
 #### Version 4

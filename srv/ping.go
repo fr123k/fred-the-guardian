@@ -112,7 +112,7 @@ func startPingService() {
 }
 
 func startRouter() *mux.Router {
-	bckCnt = counter.NewBucket(1 * time.Minute)
+	bckCnt = counter.NewBucketWitnCleanup(1 * time.Minute)
 	router := mux.NewRouter()
 
 	router.HandleFunc("/ping", ping()).
