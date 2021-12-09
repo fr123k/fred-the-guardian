@@ -36,22 +36,21 @@ type Bucket struct {
 }
 
 func NewBucket(duration time.Duration) *Bucket {
-	return &Bucket{
+	bucket := Bucket{
 		counters: make(map[string]*RateLimit),
 		keys:     make([]*string, 0),
 		duration: duration,
 	}
+	bucket.size.Store(int32(0))
+	return &bucket
 }
 
 func NewBucketWitnCleanup(duration time.Duration) *Bucket {
-	return &Bucket{
-		counters:              make(map[string]*RateLimit),
-		keys:                  make([]*string, 0),
-		duration:              duration,
-		randomCleanUpCountGet: 1,
-		randomCleanUpCountSet: 4,
-		EvictedFunc:           EvictionGarbageCollection,
-	}
+	bucket := NewBucket(duration)
+	bucket.randomCleanUpCountGet = 1
+	bucket.randomCleanUpCountSet = 4
+	bucket.EvictedFunc = EvictionGarbageCollection
+	return bucket
 }
 
 func (b *Bucket) Increment(key string) Rate {
