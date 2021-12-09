@@ -1,0 +1,20 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minimal-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/whitelist-source-range: 49.12.195.5/32
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /fred(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: fred-the-guardian
+            port:
+              number: 8080
