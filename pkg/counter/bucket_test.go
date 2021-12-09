@@ -122,3 +122,9 @@ func TestBucketWithRandomCleanup(t *testing.T) {
 
 	bucket.Print()
 }
+
+func TestBucketSize(t *testing.T) {
+	bucket := NewBucket(1 * time.Second)
+	
+	assert.EqualValues(t, 0, bucket.Size(), "Init bucket size should be an int32 with zero value.")
+}
