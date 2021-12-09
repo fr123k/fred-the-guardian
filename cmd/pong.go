@@ -67,7 +67,7 @@ func AutoDiscovery(pingCfg PingConfig) *ServerConfig {
 	for _, txt := range txtrecords {
 		host, path, _ := utility.SplitIntoTwoVars(txt, " ")
 		log.Printf("Auto Discovery try %s%s\n", host, path)
-		client := &http.Client{}
+		client := &http.Client{ Timeout: 5 * time.Second }
 		req, err := http.NewRequest("GET", fmt.Sprintf("http://%s%sstatus", host, path), nil)
 		if err != nil {
 			log.Printf(err.Error())
@@ -167,7 +167,7 @@ func HandlePongResponse(r *http.Response) (*model.PongResponse, error) {
 		return nil, err
 	}
 	defer r.Body.Close()
-	log.Printf("Response: %v", utility.PrettyPrint(pongRsp))
+	log.Printf("Pong Response: %v", utility.PrettyPrint(pongRsp))
 	return &pongRsp, nil
 }
 
@@ -179,7 +179,8 @@ func HandleRateLimitResponse(r *http.Response, wait WaitFnc) (*model.RateLimitRe
 		return nil, err
 	}
 	defer r.Body.Close()
-	log.Printf("Response: %v", utility.PrettyPrint(rateRsp))
+	log.Printf("Rate Limit Response: %v", utility.PrettyPrint(rateRsp))
+	wait(time.Duration(rateRsp.Wait) * time.Second)
 	return &rateRsp, nil
 
 }
