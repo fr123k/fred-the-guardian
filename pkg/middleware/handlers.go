@@ -63,7 +63,7 @@ func GlobalCounterMiddleware(maxCnt uint, duration time.Duration) mux.Middleware
 func BucketCountersMiddleware(counter *counter.Bucket, header string, maxCnt uint) mux.MiddlewareFunc {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.RequestURI == "/metrics" {
+			if r.RequestURI == "/metrics" || r.RequestURI == "/status" {
 				h.ServeHTTP(w, r)
 				return
 			}
