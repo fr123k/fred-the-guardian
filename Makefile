@@ -1,6 +1,6 @@
 .PHONY: build
 
-VERSION=3.7
+VERSION=4.0
 PORT?=8080
 export NAME=fr123k/fred-the-guardian
 export IMAGE="${NAME}:${VERSION}"
@@ -19,11 +19,11 @@ go-init:
 
 build:
 	go build -o build/main srv/ping.go
-	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./srv ./pkg/...
+	go test -v -timeout 60s -tags integration --cover -coverprofile=./build/cover.tmp ./srv ./pkg/...
 
 build-cli:
 	go build -o build/pong cmd/pong.go
-	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./cmd
+	go test -v -timeout 60s -tags integration --cover -coverprofile=./build/cover.tmp ./cmd
 
 coverage:
 	go test -v -timeout 60s --cover -coverprofile=./build/cover.tmp ./...

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	_"fmt"
 	"net/http"
 	"time"
 
@@ -10,16 +11,16 @@ import (
 	"github.com/fr123k/fred-the-guardian/pkg/model"
 	"github.com/fr123k/fred-the-guardian/pkg/utility"
 
+	prommiddleware "github.com/albertogviana/prometheus-middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	prommiddleware "github.com/albertogviana/prometheus-middleware"
 )
 
 var (
-	bckCnt *counter.Bucket
+	bckCnt counter.Bucket
 	rateLimitCntTotal = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "ratelimit_counter_total",
 		Help: "Number of buckets with a counter.",
@@ -106,13 +107,20 @@ func startPingService() {
 	router := startRouter()
 	router = enablePrometheus(router)
 	router = enableGlobalRateLimit(router)
-	router = enableBucketRateLimit(router)
+	// router = enableBucketRateLimit(router)
+	router = enableRedisBucketRateLimit(router)
 
 	http.ListenAndServe(":"+utility.Env("PORT", "8080"), router)
 }
 
 func startRouter() *mux.Router {
 	bckCnt = counter.NewBucketWitnCleanup(1 * time.Minute)
+	// host     := utility.Env("REDIS_HOST", "localhost")
+	// port     := utility.Env("REDIS_PORT", "6379")
+	// password := utility.Env("REDIS_PASSWORD", "")
+
+	// bckCnt = counter.NewRedisBucket(fmt.Sprintf("%s:%s", host, port), 1 * time.Minute)
+
 	router := mux.NewRouter()
 
 	router.HandleFunc("/ping", ping()).
@@ -138,6 +146,11 @@ func enableGlobalRateLimit(router *mux.Router) *mux.Router {
 }
 
 func enableBucketRateLimit(router *mux.Router) *mux.Router {
-	router.Use(middleware.BucketCountersMiddleware(bckCnt, middleware.HTTP_HEADER_SECRET_KEY, 10))
+	router.Use(middleware.BucketCountersMiddleware(&bckCnt, middleware.HTTP_HEADER_SECRET_KEY, 10))
+	return router
+}
+
+func enableRedisBucketRateLimit(router *mux.Router) *mux.Router {
+	router.Use(middleware.BucketCountersMiddleware(&bckCnt, middleware.HTTP_HEADER_SECRET_KEY, 10))
 	return router
 }

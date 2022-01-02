@@ -69,14 +69,14 @@ func BucketCountersMiddleware(counter *counter.Bucket, header string, maxCnt uin
 			}
 			// will trigger request processing
 			value := r.Header.Get(header)
-			rate := counter.Increment(value)
+			rate := (*counter).Increment(value)
 			if rate.Count > uint64(maxCnt) {
 				w.WriteHeader(http.StatusTooManyRequests)
 				json.NewEncoder(w).Encode(model.TooManyRequests(maxCnt, rate.NextReset))
 				// will stop request processing
 				return
 			}
-			log.Printf("Bucket Rate %v, %d", rate, counter.Size())
+			log.Printf("Bucket Rate %v, %d", rate, (*counter).Size())
 			h.ServeHTTP(w, r)
 			return
 		})

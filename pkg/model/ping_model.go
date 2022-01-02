@@ -6,9 +6,10 @@ import (
 )
 
 const (
-	INVALID_REQUEST_BODY = "E400"
-	UNAUTHORIZED_REQUEST = "E401"
-	TOO_MANY_REQUESTS    = "E429"
+	INVALID_REQUEST_BODY  = "E400"
+	UNAUTHORIZED_REQUEST  = "E401"
+	TOO_MANY_REQUESTS     = "E429"
+	INTERNAL_SERVER_ERROR = "E500"
 )
 
 var (
@@ -45,15 +46,15 @@ type RateLimitResponse struct {
 }
 
 type Memory struct {
-	Alloc uint64 `json:"alloc"`
+	Alloc      uint64 `json:"alloc"`
 	TotalAlloc uint64 `json:"total_alloc"`
-	SysAlloc uint64 `json:"sys_alloc"`
-	NumGC uint32 `json:"number_gc"`
+	SysAlloc   uint64 `json:"sys_alloc"`
+	NumGC      uint32 `json:"number_gc"`
 }
 
 type StatusResponse struct {
-	Counters uint `json:"counters"`
-	Memory Memory `json:"memory"`
+	Counters uint   `json:"counters"`
+	Memory   Memory `json:"memory"`
 }
 
 func MemoryUsage() Memory {
@@ -62,17 +63,17 @@ func MemoryUsage() Memory {
 	return *InMegaBytes(&m)
 }
 
-func InMegaBytes (m *runtime.MemStats) *Memory {
+func InMegaBytes(m *runtime.MemStats) *Memory {
 	return &Memory{
-		Alloc: BytesToMegaBytes(m.Alloc),
+		Alloc:      BytesToMegaBytes(m.Alloc),
 		TotalAlloc: BytesToMegaBytes(m.TotalAlloc),
-		SysAlloc: BytesToMegaBytes(m.Sys),
-		NumGC: m.NumGC,
+		SysAlloc:   BytesToMegaBytes(m.Sys),
+		NumGC:      m.NumGC,
 	}
 }
 
 func BytesToMegaBytes(b uint64) uint64 {
-    return b / 1024 / 1024
+	return b / 1024 / 1024
 }
 
 func TooManyRequests(maxCnt uint, wait int64) RateLimitResponse {
@@ -90,5 +91,13 @@ func InValidRequest(err string) ErrorResponse {
 		Code:    INVALID_REQUEST_BODY,
 		Error:   err,
 		Message: "Request body malformed.",
+	}
+}
+
+func InternalServerError(err string) ErrorResponse {
+	return ErrorResponse{
+		Code:    INTERNAL_SERVER_ERROR,
+		Error:   err,
+		Message: "Internal server error occurred.",
 	}
 }
