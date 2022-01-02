@@ -4,7 +4,7 @@ kind: Deployment
 metadata:
   name: fred-the-guardian
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       name: fred-the-guardian
@@ -15,10 +15,15 @@ spec:
     spec:
       containers:
       - name: application
-        image: fr123k/fred-the-guardian:3.7
-        imagePullPolicy: IfNotPresent
+        image: fr123k/fred-the-guardian:4.0
+        imagePullPolicy: Always
         ports:
           - containerPort: 8080
+        env:
+          - name: REDIS_HOST
+            value: redis-master
+          - name: REDIS_PORT
+            value: "6379"
         livenessProbe:
           httpGet:
             path: /status
