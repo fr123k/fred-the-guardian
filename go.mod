@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/albertogviana/prometheus-middleware v0.0.2
-	github.com/foxcpp/go-mockdns v0.0.0-20210729171921-fb145fc6f897
+	github.com/foxcpp/go-mockdns v1.2.0
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/gorilla/mux v1.8.0
 	github.com/mcuadros/go-defaults v1.2.0
