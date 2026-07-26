@@ -86,9 +86,9 @@ func (b *Bucket) randomCleanUp(maxCnt uint) uint {
 	if len(b.keys) <= 0 {
 		return del
 	}
-	rand.Seed(time.Now().UTC().UnixNano())
+	r := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	for i := uint(0); i < maxCnt; i++ {
-		randomIndex := rand.Intn(len(b.keys))
+		randomIndex := r.Intn(len(b.keys))
 		pick := b.keys[randomIndex]
 		v, exists := b.counters[*pick]
 		if exists {
