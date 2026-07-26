@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -38,10 +39,12 @@ type HandlerFunc = func(w http.ResponseWriter, r *http.Request)
 func status(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
-	json.NewEncoder(w).Encode(model.StatusResponse{
+	if err := json.NewEncoder(w).Encode(model.StatusResponse{
 		Counters: uint(bckCnt.Size()),
 		Memory:   model.MemoryUsage(),
-	})
+	}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func ping() HandlerFunc {
@@ -54,21 +57,29 @@ func ping() HandlerFunc {
 
 		if r.Body == nil {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.INVALID_REQUEST_BODY_EMPTY_PAYLOAD)
+			if err := json.NewEncoder(w).Encode(model.INVALID_REQUEST_BODY_EMPTY_PAYLOAD); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 			return
 		}
 
 		err := json.NewDecoder(r.Body).Decode(&pingRqt)
-		defer r.Body.Close()
+		defer func() {
+			if cerr := r.Body.Close(); cerr != nil {
+				log.Printf("close request body: %v", cerr)
+			}
+		}()
 
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.ErrorResponse{
+			if err := json.NewEncoder(w).Encode(model.ErrorResponse{
 				Code: model.INVALID_REQUEST_BODY,
 				//TODO expose service internal error message is not good security practice but good for quick development
 				Error:   err.Error(),
 				Message: "Request body malformed.",
-			})
+			}); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -76,7 +87,9 @@ func ping() HandlerFunc {
 		if err != nil {
 			validationErrors := err.(validator.ValidationErrors)
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(model.InValidRequest(validationErrors.Error()))
+			if err := json.NewEncoder(w).Encode(model.InValidRequest(validationErrors.Error())); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -93,8 +106,9 @@ func ping() HandlerFunc {
 			}
 		}
 
-		json.NewEncoder(w).Encode(pong)
-		return
+		if err := json.NewEncoder(w).Encode(pong); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -108,7 +122,9 @@ func startPingService() {
 	router = enableGlobalRateLimit(router)
 	router = enableBucketRateLimit(router)
 
-	http.ListenAndServe(":"+utility.Env("PORT", "8080"), router)
+	if err := http.ListenAndServe(":"+utility.Env("PORT", "8080"), router); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func startRouter() *mux.Router {

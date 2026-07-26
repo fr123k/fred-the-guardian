@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -38,7 +38,9 @@ func PingStubRateLimitExceeded(t *testing.T) (*httptest.Server, *url.URL) {
 		case "/ping":
 			w.WriteHeader(http.StatusTooManyRequests)
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(model.TooManyRequests(13, 16))
+			if err := json.NewEncoder(w).Encode(model.TooManyRequests(13, 16)); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		default:
 			http.Error(w, "not found", http.StatusNotFound)
 			return
@@ -55,9 +57,11 @@ func PingStub(t *testing.T) (*httptest.Server, *url.URL) {
 		case "/ping":
 			w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(model.PongResponse{
+			if err := json.NewEncoder(w).Encode(model.PongResponse{
 				Response: "pong",
-			})
+			}); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		default:
 			http.Error(w, "not found", http.StatusNotFound)
 			return
@@ -68,7 +72,7 @@ func PingStub(t *testing.T) (*httptest.Server, *url.URL) {
 func DNSStub(t *testing.T, u *url.URL) {
 	// disable mockdns log output
 	log := log.New(os.Stderr, "mockdns server: ", log.LstdFlags)
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 
 	srv, _ := mockdns.NewServerWithLogger(map[string]mockdns.Zone{
 		"fred.fr123k.uk.": {
@@ -78,7 +82,9 @@ func DNSStub(t *testing.T, u *url.URL) {
 
 	t.Cleanup(func() {
 		mockdns.UnpatchNet(net.DefaultResolver)
-		srv.Close()
+		if err := srv.Close(); err != nil {
+			t.Logf("close mockdns server: %v", err)
+		}
 	})
 
 	srv.PatchNet(net.DefaultResolver)

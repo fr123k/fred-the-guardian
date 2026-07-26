@@ -92,7 +92,7 @@ func (b *Bucket) randomCleanUp(maxCnt uint) uint {
 		pick := b.keys[randomIndex]
 		v, exists := b.counters[*pick]
 		if exists {
-			elapsed := time.Now().Sub(v.counter.resetDate)
+			elapsed := time.Since(v.counter.resetDate)
 
 			if elapsed > v.duration {
 				delete(b.counters, *pick)

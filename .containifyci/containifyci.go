@@ -13,6 +13,12 @@ import (
 
 func main() {
 	os.Chdir("../")
-	opts := build.NewGoServiceBuild("fred-the-guardian")
-	build.BuildAsync(opts)
+	client := build.NewGoServiceBuild("fred-client")
+	client.Image = ""
+	client.File = "cmd/pong.go"
+
+	server := build.NewGoServiceBuild("fred-server")
+	server.Image = ""
+	server.File = "srv/ping.go"
+	build.BuildAsync(client, server)
 }

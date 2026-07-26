@@ -53,26 +53,12 @@ type PingTest struct {
 
 func (p PingTest) toTestCase() HttpTest {
 	defaults.SetDefaults(&p)
-	return HttpTest{
-		Name:   p.Name,
-		Body:   p.Body,
-		Secret: p.Secret,
-		Method: p.Method,
-		Path:   p.Path,
-		Expect: p.Expect,
-	}
+	return HttpTest(p)
 }
 
 func (s StatusTest) toTestCase() HttpTest {
 	defaults.SetDefaults(&s)
-	return HttpTest{
-		Name:   s.Name,
-		Body:   s.Body,
-		Secret: s.Secret,
-		Method: s.Method,
-		Path:   s.Path,
-		Expect: s.Expect,
-	}
+	return HttpTest(s)
 }
 
 func StringPtr(s string) *string {

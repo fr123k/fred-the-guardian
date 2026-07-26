@@ -26,7 +26,7 @@ func RandomString(len uint) string {
 func SplitIntoTwoVars(str string, sep string) (string, string, error) {
 	s := strings.Split(str, sep)
 	if len(s) < 3 {
-		return "", "", fmt.Errorf("Minimum match %d < %d not found", 3, len(s))
+		return "", "", fmt.Errorf("minimum match %d < %d not found", 3, len(s))
 	}
 	return s[1], s[2], nil
 }

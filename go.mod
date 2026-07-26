@@ -1,6 +1,6 @@
 module github.com/fr123k/fred-the-guardian
 
-go 1.15
+go 1.16
 
 require (
 	github.com/albertogviana/prometheus-middleware v0.0.2
