@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -70,21 +70,20 @@ func AutoDiscovery(pingCfg PingConfig) *ServerConfig {
 		client := &http.Client{ Timeout: 5 * time.Second }
 		req, err := http.NewRequest("GET", fmt.Sprintf("http://%s%sstatus", host, path), nil)
 		if err != nil {
-			log.Printf(err.Error())
+			log.Print(err)
 			continue
 		}
 		req.Header.Set("X-SECRET-KEY", pingCfg.Secret())
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Printf(err.Error())
+			log.Print(err)
 			continue
 		}
 		log.Println(resp.StatusCode)
 		if resp.StatusCode == 200 {
 			server, port, err := net.SplitHostPort(host)
 			if err != nil {
-				log.Fatalf(err.Error())
-				continue
+				log.Fatal(err)
 			}
 			return &ServerConfig{
 				Server: server,
@@ -130,7 +129,10 @@ func DoPingRequest(url string, pingCfg PingConfig, wait WaitFnc) {
 	log.Printf("Request: %s\n", utility.PrettyPrint(pingRequest))
 
 	payloadBuf := new(bytes.Buffer)
-	json.NewEncoder(payloadBuf).Encode(pingRequest)
+	if err := json.NewEncoder(payloadBuf).Encode(pingRequest); err != nil {
+		log.Printf("Error encoding ping request '%s'\n", err)
+		return
+	}
 
 	req, err := http.NewRequest("POST", url, payloadBuf)
 	if err != nil {
@@ -148,37 +150,49 @@ func DoPingRequest(url string, pingCfg PingConfig, wait WaitFnc) {
 
 	switch r.StatusCode {
 	case http.StatusOK:
-		HandlePongResponse(r)
+		if _, err := HandlePongResponse(r); err != nil {
+			log.Printf("Error handling pong response '%s'\n", err)
+		}
 
 	case http.StatusTooManyRequests:
-		HandleRateLimitResponse(r, wait)
+		if _, err := HandleRateLimitResponse(r, wait); err != nil {
+			log.Printf("Error handling rate limit response '%s'\n", err)
+		}
 
 	default:
-		bodyText, _ := ioutil.ReadAll(r.Body)
+		bodyText, _ := io.ReadAll(r.Body)
 		log.Printf("Response: %s", string(bodyText))
 	}
 }
 
 func HandlePongResponse(r *http.Response) (*model.PongResponse, error) {
+	defer func() {
+		if cerr := r.Body.Close(); cerr != nil {
+			log.Printf("Error closing response body '%s'\n", cerr)
+		}
+	}()
 	var pongRsp model.PongResponse
 	err := json.NewDecoder(r.Body).Decode(&pongRsp)
 	if err != nil {
 		log.Printf("Error json decoding '%s'\n", err)
 		return nil, err
 	}
-	defer r.Body.Close()
 	log.Printf("Pong Response: %v", utility.PrettyPrint(pongRsp))
 	return &pongRsp, nil
 }
 
 func HandleRateLimitResponse(r *http.Response, wait WaitFnc) (*model.RateLimitResponse, error) {
+	defer func() {
+		if cerr := r.Body.Close(); cerr != nil {
+			log.Printf("Error closing response body '%s'\n", cerr)
+		}
+	}()
 	var rateRsp model.RateLimitResponse
 	err := json.NewDecoder(r.Body).Decode(&rateRsp)
 	if err != nil {
 		log.Printf("Error json decoding '%s'\n", err)
 		return nil, err
 	}
-	defer r.Body.Close()
 	log.Printf("Rate Limit Response: %v", utility.PrettyPrint(rateRsp))
 	wait(time.Duration(rateRsp.Wait) * time.Second)
 	return &rateRsp, nil

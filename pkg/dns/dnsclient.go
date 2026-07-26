@@ -21,7 +21,11 @@ func TCPCheck(addr string) (bool, error) {
 		log.Printf("%v", err)
 		return false, err
 	}
-	defer sock.Close()
+	defer func() {
+		if cerr := sock.Close(); cerr != nil {
+			log.Printf("close: %v", cerr)
+		}
+	}()
 	return true, nil
 }
 
@@ -36,6 +40,10 @@ func ServiceDiscovery(service string, checkSrvFnc ChechService) *Service {
 			continue
 		}
 		valid, err := checkSrvFnc(addr)
+		if err != nil {
+			log.Printf("check %s: %s", addr, err.Error())
+			continue
+		}
 		if !valid {
 			continue
 		}

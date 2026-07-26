@@ -17,8 +17,14 @@ func TestEnvironmentVariableSet(t *testing.T) {
 }
 
 func TestEnvironmentVariableNotSet(t *testing.T) {
-	os.Setenv(ENV_KEY_PORT, "80")
-	defer os.Unsetenv(ENV_KEY_PORT)
+	if err := os.Setenv(ENV_KEY_PORT, "80"); err != nil {
+		t.Fatalf("setenv: %v", err)
+	}
+	defer func() {
+		if err := os.Unsetenv(ENV_KEY_PORT); err != nil {
+			t.Logf("unsetenv: %v", err)
+		}
+	}()
 
 	port := Env(ENV_KEY_PORT, "8080")
 

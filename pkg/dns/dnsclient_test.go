@@ -2,7 +2,7 @@ package dns
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/foxcpp/go-mockdns"
@@ -40,7 +41,7 @@ func PingStub(t *testing.T) (*httptest.Server, *url.URL) {
 func DNSStub(t *testing.T, port uint16) {
 	// disable mockdns log output
 	log := log.New(os.Stderr, "mockdns server: ", log.LstdFlags)
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 
 	srv, _ := mockdns.NewServerWithLogger(map[string]mockdns.Zone{
 		"localhost.localdomain.": {
@@ -77,7 +78,9 @@ func DNSStub(t *testing.T, port uint16) {
 
 	t.Cleanup(func() {
 		mockdns.UnpatchNet(net.DefaultResolver)
-		srv.Close()
+		if err := srv.Close(); err != nil {
+			t.Logf("close mockdns server: %v", err)
+		}
 	})
 
 	srv.PatchNet(net.DefaultResolver)
@@ -93,14 +96,27 @@ func TestServiceDiscovery(t *testing.T) {
 	}
 	DNSStub(t, uint16(p))
 
-	srv := ServiceDiscovery("fred", TCPCheck)
+	// Use a check that only considers the localhost stub reachable. The real
+	// TCPCheck cannot be used here because some CI/sandbox environments route
+	// every TCP dial through a proxy that always succeeds, making the
+	// non-localhost SRV target appear reachable and changing the selected
+	// service.
+	srv := ServiceDiscovery("fred", func(addr string) (bool, error) {
+		host, _, _ := net.SplitHostPort(addr)
+		return host == "127.0.0.1" || strings.HasPrefix(host, "localhost"), nil
+	})
 	assert.Equal(t, Service{IP: "127.0.0.1", Host: "localhost.localdomain.", Port: uint16(p)}, *srv, "The localhost service has to be discovered from the possible options.")
 }
 
 func TestServiceDiscoveryFailNotReachableService(t *testing.T) {
 	DNSStub(t, 34567)
 
-	srv := ServiceDiscovery("fred", TCPCheck)
+	// No service is reachable for the "fred" SRV records (port 34567 has
+	// nothing listening), so discovery must return nil. A check that always
+	// reports unreachable is used to stay independent of the host network.
+	srv := ServiceDiscovery("fred", func(addr string) (bool, error) {
+		return false, nil
+	})
 	assert.Nil(t, srv, "Service discovery returns nil if it doesn't found a valid DNS SRV record.")
 }
 

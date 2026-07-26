@@ -22,14 +22,15 @@ func AuthenticationMiddleware(next http.Handler) http.Handler {
 
 		if len(secKey) == 0 {
 			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(model.UNAUTHORIZED_REQUEST_RESPONSE)
+			if err := json.NewEncoder(w).Encode(model.UNAUTHORIZED_REQUEST_RESPONSE); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 			// will stop request processing
 			return
 		}
 
 		// will trigger request processing
 		next.ServeHTTP(w, r)
-		return
 	})
 }
 
@@ -47,13 +48,14 @@ func GlobalCounterMiddleware(maxCnt uint, duration time.Duration) mux.Middleware
 			rate := counter.Increment()
 			if rate.Count > uint64(maxCnt) {
 				w.WriteHeader(http.StatusTooManyRequests)
-				json.NewEncoder(w).Encode(model.TooManyRequests(maxCnt, rate.NextReset))
+				if err := json.NewEncoder(w).Encode(model.TooManyRequests(maxCnt, rate.NextReset)); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
 				// will stop request processing
 				return
 			}
 			log.Printf("Global Rate %v", rate)
 			h.ServeHTTP(w, r)
-			return
 		})
 	}
 }
@@ -72,13 +74,14 @@ func BucketCountersMiddleware(counter *counter.Bucket, header string, maxCnt uin
 			rate := counter.Increment(value)
 			if rate.Count > uint64(maxCnt) {
 				w.WriteHeader(http.StatusTooManyRequests)
-				json.NewEncoder(w).Encode(model.TooManyRequests(maxCnt, rate.NextReset))
+				if err := json.NewEncoder(w).Encode(model.TooManyRequests(maxCnt, rate.NextReset)); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
 				// will stop request processing
 				return
 			}
 			log.Printf("Bucket Rate %v, %d", rate, counter.Size())
 			h.ServeHTTP(w, r)
-			return
 		})
 	}
 }

@@ -57,14 +57,14 @@ func TestSplitIntoTwoVars(t *testing.T) {
 			expect: struct {
 				values []string
 				err    error
-			}{values: []string{"", ""}, err: errors.New("Minimum match 3 < 1 not found")},
+			}{values: []string{"", ""}, err: errors.New("minimum match 3 < 1 not found")},
 		},
 		"no match": {
 			input: "Hello World",
 			expect: struct {
 				values []string
 				err    error
-			}{values: []string{"", ""}, err: errors.New("Minimum match 3 < 2 not found")},
+			}{values: []string{"", ""}, err: errors.New("minimum match 3 < 2 not found")},
 		},
 		"match": {
 			input: "1 host path",

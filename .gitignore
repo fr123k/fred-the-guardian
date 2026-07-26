@@ -4,3 +4,11 @@ build/
 client.crt
 ca.crt
 client.key
+
+# build artifacts
+artifacts.txt
+coverage.txt
+fred-client-darwin-arm64
+fred-client-linux-arm64
+fred-server-darwin-arm64
+fred-server-linux-arm64
